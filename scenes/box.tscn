@@ -4,41 +4,41 @@
 [ext_resource type="SpriteFrames" uid="uid://cd2jv1ki8dvjh" path="res://assets/blocks.tres" id="2_ks2v0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_telwu"]
-size = Vector2(16, 18)
+size = Vector2(18, 18)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ks2v0"]
-radius = 2.0
+radius = 4.0
 
 [node name="Box" type="RigidBody2D" groups=["block"]]
 collision_layer = 2
 collision_mask = 3
-can_sleep = false
 lock_rotation = true
 freeze_mode = 1
 script = ExtResource("1_ks2v0")
+metadata/_edit_vertical_guides_ = [-9.0, 9.0]
 
 [node name="sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = ExtResource("2_ks2v0")
-animation = &"forest"
+animation = &"unmoveable"
 
 [node name="collisionshape" type="CollisionShape2D" parent="."]
-visible = false
+scale = Vector2(0.999, 0.999)
 shape = SubResource("RectangleShape2D_telwu")
 
 [node name="sensor_right" type="Area2D" parent="."]
-visible = false
 position = Vector2(11, 0)
 collision_layer = 0
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="sensor_right"]
+position = Vector2(3, 0)
 shape = SubResource("CircleShape2D_ks2v0")
 
 [node name="sensor_bottom" type="Area2D" parent="."]
-visible = false
-position = Vector2(0, 12)
+position = Vector2(0, 11)
 collision_layer = 0
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="sensor_bottom"]
+position = Vector2(0, 3)
 shape = SubResource("CircleShape2D_ks2v0")

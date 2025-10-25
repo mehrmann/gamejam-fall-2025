@@ -1,0 +1,64 @@
+[gd_scene load_steps=7 format=3 uid="uid://c76kgq06r328i"]
+
+[ext_resource type="Script" uid="uid://db37ebnkkfbx7" path="res://game_area.gd" id="1_4eb3c"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_gdmpp"]
+normal = Vector2(1, 4.371139e-08)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4eb3c"]
+size = Vector2(99, 263)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vlxm1"]
+size = Vector2(197, 127)
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_4eb3c"]
+normal = Vector2(1, 0)
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_vlxm1"]
+normal = Vector2(-1, 0)
+
+[node name="Game Area" type="StaticBody2D"]
+collision_mask = 3
+script = ExtResource("1_4eb3c")
+metadata/_edit_horizontal_guides_ = [-90.0, -180.0, -360.0]
+metadata/_edit_vertical_guides_ = [-98.0]
+
+[node name="bottom" type="CollisionShape2D" parent="."]
+rotation = -1.5707964
+shape = SubResource("WorldBoundaryShape2D_gdmpp")
+
+[node name="kill_zone" type="Area2D" parent="bottom"]
+position = Vector2(407, 1.7762184e-05)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="bottom/kill_zone"]
+position = Vector2(1, -0.99999976)
+shape = SubResource("RectangleShape2D_4eb3c")
+
+[node name="reload_area" type="Area2D" parent="bottom"]
+rotation = 1.5707964
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="bottom/reload_area"]
+position = Vector2(1, -60.5)
+shape = SubResource("RectangleShape2D_vlxm1")
+
+[node name="ColorRect" type="ColorRect" parent="bottom"]
+offset_left = -43.999996
+offset_top = -88.0
+offset_right = 0.13341904
+offset_bottom = 84.273254
+color = Color(1, 0, 1, 1)
+
+[node name="boxes" type="Node2D" parent="."]
+position = Vector2(-90, -9)
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="."]
+position = Vector2(-96, 0)
+shape = SubResource("WorldBoundaryShape2D_4eb3c")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(96, 0)
+shape = SubResource("WorldBoundaryShape2D_vlxm1")
+
+[connection signal="body_entered" from="bottom/kill_zone" to="." method="_on_kill_zone_body_entered"]
+[connection signal="body_entered" from="bottom/reload_area" to="." method="_on_reload_area_body_entered"]

@@ -1,17 +1,24 @@
-[gd_scene load_steps=5 format=3 uid="uid://c4775a5ltcdgv"]
+[gd_scene load_steps=4 format=3 uid="uid://c4775a5ltcdgv"]
 
 [ext_resource type="PackedScene" uid="uid://b8742761vane7" path="res://scenes/character.tscn" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://dul06hvqknufo" path="res://scenes/overlay.tscn" id="2_lnu2h"]
-[ext_resource type="PackedScene" uid="uid://c1l68ltryxasu" path="res://scenes/box.tscn" id="2_yqjtg"]
-
-[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_uwrxv"]
-distance = -1.0
+[ext_resource type="PackedScene" uid="uid://c76kgq06r328i" path="res://scenes/game_area.tscn" id="3_lnu2h"]
 
 [node name="Game" type="Node2D"]
 metadata/_edit_lock_ = true
+metadata/_edit_vertical_guides_ = [124.0, 443.0]
 
 [node name="Character" parent="." instance=ExtResource("1_uwrxv")]
-position = Vector2(284, 66)
+position = Vector2(4, -393)
+
+[node name="ColorRect" type="ColorRect" parent="Character"]
+z_index = -10
+offset_left = -192.0
+offset_top = -171.0
+offset_right = 201.0
+offset_bottom = 268.0
+color = Color(0.039215688, 0.6901961, 1, 1)
+metadata/_edit_use_anchors_ = true
 
 [node name="Camera2D" type="Camera2D" parent="Character"]
 position = Vector2(-1, 8)
@@ -25,38 +32,4 @@ offset_right = 160.0
 offset_bottom = 90.0
 metadata/_edit_lock_ = true
 
-[node name="Bottom World Boundary" type="StaticBody2D" parent="."]
-position = Vector2(282, 143)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Bottom World Boundary"]
-shape = SubResource("WorldBoundaryShape2D_uwrxv")
-
-[node name="Boxes" type="Node2D" parent="."]
-position = Vector2(0, -79)
-
-[node name="Box" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(213, 213)
-color = 1
-
-[node name="Box2" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(230, 213)
-
-[node name="Box3" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(213, 195)
-
-[node name="Box4" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(361, 173)
-
-[node name="Box5" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(276, 213)
-color = 4
-
-[node name="Box6" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(293, 213)
-
-[node name="Box7" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(330, 212)
-
-[node name="Box8" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(330, 193)
-color = 3
+[node name="Game Area" parent="." instance=ExtResource("3_lnu2h")]

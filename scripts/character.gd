@@ -29,13 +29,19 @@ func _physics_process(delta:float) -> void:
 	if Input.is_action_just_pressed("drill"):
 		if Input.is_action_pressed("ui_down"):
 			for body in bottom_tool.get_overlapping_bodies():
-				break_block(body)
+				body.health -= 1
+				if body.health == 0:
+					break_block(body)
 		elif !sprite.flip_h:
 			for body in right_tool.get_overlapping_bodies():
-				break_block(body)
+				body.health -= 1
+				if body.health == 0:
+					break_block(body)
 		else:
 			for body in left_tool.get_overlapping_bodies():
-				break_block(body)
+				body.health -= 1
+				if body.health == 0:
+					break_block(body)
 
 	move_and_slide()
 

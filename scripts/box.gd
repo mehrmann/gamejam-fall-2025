@@ -1,28 +1,30 @@
 extends RigidBody2D
 
-const STOP_SPEED_THRESHOLD = 5.0
-const REST_TIME_REQUIRED = 1.0
+const STOP_SPEED_THRESHOLD = 2.0
+const REST_TIME_REQUIRED = .25
 const TILE_SIZE := 18  
 
 var rest_timer := 0.0
 @export var is_resting := false
 enum colors {
 	red,
-	orange,
 	yellow,
 	green,
 	forest,
-	steel
+	orange,
+	steel,
+	unbreakable,
+	unmoveable
 }
 @export var color := colors.red
 
 @onready var sensors : Array[Area2D] = [$sensor_right, $sensor_bottom]
 var merge_candidates_map = {}
 
+var health = 1
+
 func _ready() -> void:
-	for sensor in sensors:
-		sensor.body_entered.connect(on_sensor_body_entered.bind(sensor))
-		sensor.body_exited.connect(on_sensor_body_exited.bind(sensor))
+	randomize_color()
 	$sprite.animation = colors.keys()[color]
 
 func _physics_process(delta: float) -> void:
@@ -33,21 +35,16 @@ func _physics_process(delta: float) -> void:
 	
 	is_resting = rest_timer >= REST_TIME_REQUIRED
 	
-	if is_resting:
-		for sensor in merge_candidates_map:
-			var candidate = merge_candidates_map[sensor]
-			print("merge candidate " + candidate.name)
-			if candidate.is_resting and candidate.color == self.color:
-				merge_bodies(self, candidate, sensor)
-				merge_candidates_map.erase(sensor)
-
-func on_sensor_body_entered(body: Node2D, sensor: Area2D) -> void:
-	if body is RigidBody2D:
-		merge_candidates_map[sensor] = body
-
-func on_sensor_body_exited(body: Node2D, sensor: Area2D) -> void:
-	if merge_candidates_map.has(sensor) and body == merge_candidates_map[sensor]:
-		merge_candidates_map.erase(sensor)
+	if is_resting and color == colors.unmoveable:
+		freeze = true
+		can_sleep = true
+	
+	if is_resting and color < colors.unbreakable:
+		for sensor in sensors:
+			if sensor != null and sensor.has_overlapping_bodies():
+				for overlapping in sensor.get_overlapping_bodies():
+					if overlapping.is_resting and overlapping.color == self.color:
+						merge_bodies(self, overlapping, sensor)
 
 func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
 	if host == guest or host.is_queued_for_deletion() or guest.is_queued_for_deletion():
@@ -58,23 +55,24 @@ func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
 	host.linear_velocity = Vector2.ZERO
 	#host.angular_velocity = 0.0
 
-	print("merging " + host.name + " and " + guest.name)
 	for child in guest.get_children():
 		var oldName = child.name
 		child.reparent(host, true)
 		child.name = guest.name + "_" + oldName
 		if child is Area2D:
-			child.body_entered.connect(on_sensor_body_entered.bind(child))
-			child.body_exited.connect(on_sensor_body_exited.bind(child))
+			sensors.append(child)
+			#child.body_entered.connect(on_sensor_body_entered.bind(child))
+			#child.body_exited.connect(on_sensor_body_exited.bind(child))
 		
-	print_tree_pretty()
-	
+	#print_tree_pretty()
+	sensors.erase(sensor)
 	sensor.queue_free()
 	guest.queue_free()
 	
 	var occ = build_occupancy()
 	for collisionShape in get_children().filter(func(node: Node2D): return node is CollisionShape2D):
 		var neighbor_mask = get_neighbors_for(collisionShape, occ)
+		#print(collisionShape.name + "=" + str(neighbor_mask))
 		(get_node(collisionShape.name.replace("collisionshape", "sprite")) as AnimatedSprite2D).frame = neighbor_mask
 
 func world_to_cell(p: Vector2) -> Vector2i:
@@ -107,3 +105,34 @@ func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> int:
 			mask |= DIRS[dir]
 			
 	return mask
+
+func randomize_color():
+	var max_colors = 2
+	var unbreakable = 0.05
+	if (global_position.y > 100 * 18):
+		max_colors = 6
+		unbreakable = 0.1
+	elif (global_position.y > 80 * 18):
+		max_colors = 5
+		unbreakable = 0.15
+	elif (global_position.y > 60 * 18):
+		max_colors = 4
+		unbreakable = 0.2
+	elif (global_position.y > 20*18):
+		max_colors = 3
+		unbreakable = 0.3
+	var keys := colors.keys()
+	if randf() > unbreakable:
+		color = colors[keys[randi() % max_colors]]
+	else:
+		health = 8
+		if randf() > 0.5:
+			color = colors.unbreakable
+		else:
+			color = colors.unmoveable
+
+func snap_to_grid(world_pos: Vector2, grid_origin: Vector2, cell_size: float) -> Vector2:
+	var local_pos = world_pos - grid_origin
+	var cell_x = round(local_pos.x / cell_size)
+	var cell_y = round(local_pos.y / cell_size)
+	return grid_origin + Vector2(cell_x * cell_size, cell_y * cell_size)
