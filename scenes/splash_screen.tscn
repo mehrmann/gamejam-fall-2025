@@ -1,6 +1,6 @@
-[gd_scene load_steps=11 format=3 uid="uid://ddbbdktpneikx"]
+[gd_scene load_steps=11 format=3 uid="uid://vemuv1dds6gc"]
 
-[ext_resource type="Script" uid="uid://dix168dcwn604" path="res://scripts/splash_screen.gd" id="1_n4g2v"]
+[ext_resource type="Script" uid="uid://05mlko04fy4c" path="res://scripts/splash_screen.gd" id="1_n4g2v"]
 [ext_resource type="FontFile" uid="uid://carr16tyulr2d" path="res://assets/Kenney Blocks.ttf" id="2_hsxvm"]
 [ext_resource type="Texture2D" uid="uid://cfbm0hngibx7k" path="res://assets/decor_block2.png" id="3_w4c0s"]
 [ext_resource type="Texture2D" uid="uid://ijbydupj2w8t" path="res://assets/decor_block1.png" id="4_vob37"]

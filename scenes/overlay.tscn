@@ -39,41 +39,43 @@ position = Vector2(35, 59)
 scale = Vector2(0.061523467, 0.064778656)
 texture = ExtResource("3_sfd0e")
 
-[node name="Buster" type="Label" parent="LeftPanel"]
+[node name="Block" type="Label" parent="LeftPanel"]
+z_index = 5
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 1.5265872
-anchor_top = 3.8401961
-anchor_right = -0.66785717
-anchor_bottom = 3.0754902
-offset_left = -113.86111
-offset_top = -541.2353
-offset_right = 126.13889
-offset_bottom = -391.58826
+anchor_left = 0.521
+anchor_top = 0.642
+anchor_right = 0.521
+anchor_bottom = 0.642
+offset_left = -23.470001
+offset_top = -11.560005
+offset_right = 23.529999
+offset_bottom = 11.439995
 theme_override_colors/font_color = Color(0.34117648, 0.34117648, 0.34117648, 1)
 theme_override_fonts/font = ExtResource("2_0miq5")
 theme_override_font_sizes/font_size = 20
-text = "Buster"
+text = "Block"
 label_settings = SubResource("LabelSettings_tn5s6")
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="Block" type="Label" parent="LeftPanel"]
+[node name="Buster" type="Label" parent="LeftPanel"]
+z_index = 5
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 1.6714286
-anchor_top = 0.9111111
-anchor_right = -0.7285714
-anchor_bottom = 0.6611111
-offset_left = -118.0
-offset_top = -76.0
-offset_right = 122.0
-offset_bottom = 20.0
+anchor_left = 0.521
+anchor_top = 0.85866666
+anchor_right = 0.521
+anchor_bottom = 0.85866666
+offset_left = -23.470001
+offset_top = -11.560005
+offset_right = 23.529999
+offset_bottom = 11.439995
 theme_override_colors/font_color = Color(0.34117648, 0.34117648, 0.34117648, 1)
 theme_override_fonts/font = ExtResource("2_0miq5")
 theme_override_font_sizes/font_size = 20
-text = "Block"
+text = "BUSTER"
 label_settings = SubResource("LabelSettings_tn5s6")
 horizontal_alignment = 1
 vertical_alignment = 1

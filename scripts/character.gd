@@ -11,6 +11,8 @@ const JUMP_VELOCITY = -180.0
 var break_block_sound = preload("res://assets/sounds/break_block.wav")
 var splat_sound = preload("res://assets/sounds/splat.wav")
 
+var energy = 100
+
 func _physics_process(delta:float) -> void:
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -27,6 +29,7 @@ func _physics_process(delta:float) -> void:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 	
 	if Input.is_action_just_pressed("drill"):
+		energy -= 1
 		if Input.is_action_pressed("ui_down"):
 			for body in bottom_tool.get_overlapping_bodies():
 				body.health -= 1
@@ -52,8 +55,14 @@ func _on_head_body_entered(body: Node2D) -> void:
 		if block.linear_velocity.abs().y > 0:
 			audio_player.stream = splat_sound
 			audio_player.play()
+			$game_over_timer.start()
+
 
 func break_block(body):
 	audio_player.stream = break_block_sound
 	audio_player.play()
 	body.queue_free()
+
+
+func _on_game_over_timer_timeout() -> void:
+	get_tree().change_scene_to_file("res://scenes/gameover.tscn")
