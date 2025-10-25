@@ -6,7 +6,15 @@ const TILE_SIZE := 18
 
 var rest_timer := 0.0
 @export var is_resting := false
-@export var color := "blue"
+enum colors {
+	red,
+	orange,
+	yellow,
+	green,
+	forest,
+	steel
+}
+@export var color := colors.red
 
 @onready var sensors : Array[Area2D] = [$sensor_right, $sensor_bottom]
 var merge_candidates_map = {}
@@ -15,6 +23,7 @@ func _ready() -> void:
 	for sensor in sensors:
 		sensor.body_entered.connect(on_sensor_body_entered.bind(sensor))
 		sensor.body_exited.connect(on_sensor_body_exited.bind(sensor))
+	$sprite.animation = colors.keys()[color]
 
 func _physics_process(delta: float) -> void:
 	if linear_velocity.length() < STOP_SPEED_THRESHOLD:
@@ -28,7 +37,7 @@ func _physics_process(delta: float) -> void:
 		for sensor in merge_candidates_map:
 			var candidate = merge_candidates_map[sensor]
 			print("merge candidate " + candidate.name)
-			if candidate.is_resting:
+			if candidate.is_resting and candidate.color == self.color:
 				merge_bodies(self, candidate, sensor)
 				merge_candidates_map.erase(sensor)
 

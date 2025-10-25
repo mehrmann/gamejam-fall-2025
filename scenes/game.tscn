@@ -36,6 +36,7 @@ position = Vector2(0, -79)
 
 [node name="Box" parent="Boxes" instance=ExtResource("2_yqjtg")]
 position = Vector2(213, 213)
+color = 1
 
 [node name="Box2" parent="Boxes" instance=ExtResource("2_yqjtg")]
 position = Vector2(230, 213)
@@ -44,10 +45,11 @@ position = Vector2(230, 213)
 position = Vector2(213, 195)
 
 [node name="Box4" parent="Boxes" instance=ExtResource("2_yqjtg")]
-position = Vector2(230, 195)
+position = Vector2(361, 173)
 
 [node name="Box5" parent="Boxes" instance=ExtResource("2_yqjtg")]
 position = Vector2(276, 213)
+color = 4
 
 [node name="Box6" parent="Boxes" instance=ExtResource("2_yqjtg")]
 position = Vector2(293, 213)
@@ -57,3 +59,4 @@ position = Vector2(330, 212)
 
 [node name="Box8" parent="Boxes" instance=ExtResource("2_yqjtg")]
 position = Vector2(330, 193)
+color = 3

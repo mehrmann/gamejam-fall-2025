@@ -1,127 +1,7 @@
-[gd_scene load_steps=22 format=3 uid="uid://c1l68ltryxasu"]
+[gd_scene load_steps=5 format=3 uid="uid://c1l68ltryxasu"]
 
 [ext_resource type="Script" uid="uid://1p25x1mcuvx2" path="res://scripts/box.gd" id="1_ks2v0"]
-[ext_resource type="Texture2D" uid="uid://c8g04uye123ux" path="res://assets/blocks1.png" id="2_ks2v0"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ks2v0"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(72, 72, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_c2ln5"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 72, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_telwu"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 72, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_brpd5"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 72, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ry43h"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(72, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_dijgj"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_faous"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_wavyb"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_igdtg"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(72, 0, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_anxlp"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 0, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_yches"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 0, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_h6rpn"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 0, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_gu2bm"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(72, 18, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_x8w8a"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 18, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ym20b"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 18, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_oukka"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 18, 18, 18)
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_c2ln5"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ks2v0")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_c2ln5")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_telwu")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_brpd5")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ry43h")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_dijgj")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_faous")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_wavyb")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_igdtg")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_anxlp")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_yches")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_h6rpn")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_gu2bm")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_x8w8a")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ym20b")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_oukka")
-}],
-"loop": true,
-"name": &"default",
-"speed": 5.0
-}]
+[ext_resource type="SpriteFrames" uid="uid://cd2jv1ki8dvjh" path="res://assets/blocks.tres" id="2_ks2v0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_telwu"]
 size = Vector2(16, 18)
@@ -138,12 +18,15 @@ freeze_mode = 1
 script = ExtResource("1_ks2v0")
 
 [node name="sprite" type="AnimatedSprite2D" parent="."]
-sprite_frames = SubResource("SpriteFrames_c2ln5")
+sprite_frames = ExtResource("2_ks2v0")
+animation = &"forest"
 
 [node name="collisionshape" type="CollisionShape2D" parent="."]
+visible = false
 shape = SubResource("RectangleShape2D_telwu")
 
 [node name="sensor_right" type="Area2D" parent="."]
+visible = false
 position = Vector2(11, 0)
 collision_layer = 0
 collision_mask = 2
@@ -152,6 +35,7 @@ collision_mask = 2
 shape = SubResource("CircleShape2D_ks2v0")
 
 [node name="sensor_bottom" type="Area2D" parent="."]
+visible = false
 position = Vector2(0, 12)
 collision_layer = 0
 collision_mask = 2
