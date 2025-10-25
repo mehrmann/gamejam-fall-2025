@@ -1,142 +1,125 @@
-[gd_scene load_steps=13 format=3 uid="uid://c1l68ltryxasu"]
+[gd_scene load_steps=22 format=3 uid="uid://c1l68ltryxasu"]
 
 [ext_resource type="Script" uid="uid://1p25x1mcuvx2" path="res://scripts/box.gd" id="1_ks2v0"]
 [ext_resource type="Texture2D" uid="uid://c8g04uye123ux" path="res://assets/blocks1.png" id="2_ks2v0"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ks2v0"]
 atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_telwu"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_brpd5"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 36, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ry43h"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(18, 18, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_dijgj"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(0, 18, 18, 18)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_faous"]
-atlas = ExtResource("2_ks2v0")
-region = Rect2(36, 18, 18, 18)
+region = Rect2(72, 72, 18, 18)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_c2ln5"]
 atlas = ExtResource("2_ks2v0")
-region = Rect2(72, 72, 18, 18)
+region = Rect2(36, 72, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_telwu"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(0, 72, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_brpd5"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(18, 72, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ry43h"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(72, 36, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dijgj"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(36, 36, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_faous"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(0, 36, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wavyb"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(18, 36, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_igdtg"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(72, 0, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_anxlp"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(36, 0, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yches"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(0, 0, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h6rpn"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(18, 0, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gu2bm"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(72, 18, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x8w8a"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(36, 18, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ym20b"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(0, 18, 18, 18)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oukka"]
+atlas = ExtResource("2_ks2v0")
+region = Rect2(18, 18, 18, 18)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_c2ln5"]
 animations = [{
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ks2v0")
-}],
-"loop": true,
-"name": &"bottom_center",
-"speed": 5.0
 }, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_telwu")
-}],
-"loop": true,
-"name": &"bottom_left",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_brpd5")
-}],
-"loop": true,
-"name": &"bottom_right",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ry43h")
-}],
-"loop": true,
-"name": &"center",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_dijgj")
-}],
-"loop": true,
-"name": &"center_left",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_faous")
-}],
-"loop": true,
-"name": &"center_right",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"col_bottom",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"col_center",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"col_top",
-"speed": 5.0
-}, {
-"frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_c2ln5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_telwu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_brpd5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ry43h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dijgj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_faous")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wavyb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_igdtg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_anxlp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yches")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h6rpn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gu2bm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x8w8a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ym20b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oukka")
 }],
 "loop": true,
 "name": &"default",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"row_center",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"row_left",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"row_right",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"top_center",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"top_left",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"top_right",
-"speed": 5.0
-}, {
-"frames": [],
-"loop": true,
-"name": &"unbreakable",
 "speed": 5.0
 }]
 
@@ -175,8 +158,3 @@ collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="sensor_bottom"]
 shape = SubResource("CircleShape2D_ks2v0")
-
-[connection signal="body_entered" from="sensor_right" to="." method="_on_sensor_right_body_entered"]
-[connection signal="body_exited" from="sensor_right" to="." method="_on_sensor_right_body_exited"]
-[connection signal="body_entered" from="sensor_bottom" to="." method="_on_sensor_bottom_body_entered"]
-[connection signal="body_exited" from="sensor_bottom" to="." method="_on_sensor_bottom_body_exited"]

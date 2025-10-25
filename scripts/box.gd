@@ -1,7 +1,7 @@
 extends RigidBody2D
 
 const STOP_SPEED_THRESHOLD = 5.0
-const REST_TIME_REQUIRED = 0.25
+const REST_TIME_REQUIRED = 1.0
 const TILE_SIZE := 18  
 
 var rest_timer := 0.0
@@ -65,7 +65,8 @@ func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
 	
 	var occ = build_occupancy()
 	for collisionShape in get_children().filter(func(node: Node2D): return node is CollisionShape2D):
-		print(str(collisionShape) + str(get_neighbors_for(collisionShape, occ)))
+		var neighbor_mask = get_neighbors_for(collisionShape, occ)
+		(get_node(collisionShape.name.replace("collisionshape", "sprite")) as AnimatedSprite2D).frame = neighbor_mask
 
 func world_to_cell(p: Vector2) -> Vector2i:
 	return Vector2i(
@@ -81,12 +82,19 @@ func build_occupancy() -> Dictionary:
 			occ[cell] = child
 	return occ
 
-func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> Dictionary:
+func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> int:
 	var cell := world_to_cell(child.global_position)
-	return {
-		"left":  occ.has(cell + Vector2i(-1, 0)),
-		"right": occ.has(cell + Vector2i(1, 0)),
-		"up":    occ.has(cell + Vector2i(0, -1)),
-		"down":  occ.has(cell + Vector2i(0, 1)),
+	
+	const DIRS := {
+		Vector2i(-1, 0): 1,  # left  -> bit 0
+		Vector2i(1, 0): 2,   # right -> bit 1
+		Vector2i(0, -1): 4,  # up    -> bit 2
+		Vector2i(0, 1): 8    # down  -> bit 3
 	}
 	
+	var mask := 0
+	for dir in DIRS:
+		if occ.has(cell + dir):
+			mask |= DIRS[dir]
+			
+	return mask
