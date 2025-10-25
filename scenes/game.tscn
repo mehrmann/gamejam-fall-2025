@@ -1,0 +1,95 @@
+[gd_scene load_steps=5 format=3 uid="uid://c4775a5ltcdgv"]
+
+[ext_resource type="PackedScene" uid="uid://b8742761vane7" path="res://scenes/character.tscn" id="1_uwrxv"]
+[ext_resource type="PackedScene" uid="uid://dul06hvqknufo" path="res://scenes/overlay.tscn" id="2_lnu2h"]
+[ext_resource type="PackedScene" uid="uid://c1l68ltryxasu" path="res://scenes/box.tscn" id="2_yqjtg"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_uwrxv"]
+distance = -1.0
+
+[node name="Game" type="Node2D"]
+metadata/_edit_lock_ = true
+
+[node name="Character" parent="." instance=ExtResource("1_uwrxv")]
+position = Vector2(283, 109)
+
+[node name="Camera2D" type="Camera2D" parent="Character"]
+position = Vector2(-1, 8)
+
+[node name="Overlay" parent="Character/Camera2D" instance=ExtResource("2_lnu2h")]
+z_index = 10
+offset_left = -160.0
+offset_top = -90.0
+offset_right = 160.0
+offset_bottom = 90.0
+
+[node name="Bottom World Boundary" type="StaticBody2D" parent="."]
+position = Vector2(282, 222)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Bottom World Boundary"]
+shape = SubResource("WorldBoundaryShape2D_uwrxv")
+
+[node name="Boxes" type="Node2D" parent="."]
+
+[node name="Box" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(248, 214)
+
+[node name="Box2" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(265, 214)
+
+[node name="Box4" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(334, 123)
+
+[node name="Box6" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(282, 214)
+
+[node name="Box8" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(299, 214)
+
+[node name="Box3" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(248, 194)
+
+[node name="Box5" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(265, 194)
+
+[node name="Box7" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(282, 194)
+
+[node name="Box9" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(299, 194)
+
+[node name="Box10" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(248, 174)
+
+[node name="Box11" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(265, 174)
+
+[node name="Box12" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(282, 174)
+
+[node name="Box13" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(299, 174)
+
+[node name="Box14" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(248, 154)
+
+[node name="Box15" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(265, 154)
+
+[node name="Box16" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(282, 154)
+
+[node name="Box17" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(299, 154)
+
+[node name="Box18" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(248, 134)
+
+[node name="Box19" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(265, 134)
+
+[node name="Box20" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(282, 134)
+
+[node name="Box21" parent="Boxes" instance=ExtResource("2_yqjtg")]
+position = Vector2(299, 134)
