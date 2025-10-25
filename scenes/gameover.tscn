@@ -1,0 +1,105 @@
+[gd_scene load_steps=10 format=3 uid="uid://ciq2kabtfrhe5"]
+
+[ext_resource type="Texture2D" uid="uid://ijbydupj2w8t" path="res://assets/decor_block1.png" id="1_3gj0k"]
+[ext_resource type="FontFile" uid="uid://carr16tyulr2d" path="res://assets/Kenney Blocks.ttf" id="1_ncp31"]
+[ext_resource type="Texture2D" uid="uid://cfbm0hngibx7k" path="res://assets/decor_block2.png" id="2_ke020"]
+[ext_resource type="Texture2D" uid="uid://ygku5rl4crnr" path="res://assets/decor_block3.png" id="3_r8puk"]
+[ext_resource type="Texture2D" uid="uid://dlh01lmnufl4o" path="res://assets/decor_block4.png" id="4_hvwf0"]
+[ext_resource type="Texture2D" uid="uid://dbp07frc381dt" path="res://assets/decor_block5.png" id="5_taj7i"]
+[ext_resource type="Texture2D" uid="uid://dq0cqs0wplixs" path="res://assets/decor_block6.png" id="6_v8l1s"]
+[ext_resource type="Texture2D" uid="uid://dqlv3rmvvg5on" path="res://assets/Hero_dead.png" id="8_ke020"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_dy3ie"]
+font_size = 32
+font_color = Color(0.16800001, 0.36133334, 0.4, 1)
+
+[node name="Gameover" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(-1, 8)
+metadata/_edit_lock_ = true
+
+[node name="OuterBackground" type="ColorRect" parent="."]
+offset_left = -161.0
+offset_top = -82.0
+offset_right = 158.0
+offset_bottom = 96.0
+color = Color(0.3882353, 0.83137256, 0.92156863, 1)
+
+[node name="BorderBackground" type="ColorRect" parent="OuterBackground"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 8.0
+offset_right = 313.0
+offset_bottom = 172.0
+color = Color(0.186, 0.2893333, 0.31, 1)
+
+[node name="InnerBackground" type="ColorRect" parent="OuterBackground/BorderBackground"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 302.0
+offset_bottom = 162.0
+color = Color(0.3882353, 0.83137256, 0.92156863, 1)
+
+[node name="DecorBlock1" type="Sprite2D" parent="."]
+position = Vector2(-78, 73)
+texture = ExtResource("1_3gj0k")
+
+[node name="DecorBlock2" type="Sprite2D" parent="."]
+position = Vector2(-27.000002, 57)
+rotation = 0.7853982
+texture = ExtResource("2_ke020")
+
+[node name="DecorBlock3" type="Sprite2D" parent="."]
+position = Vector2(25, 73)
+texture = ExtResource("3_r8puk")
+
+[node name="DecorBlock8" type="Sprite2D" parent="."]
+position = Vector2(59, 73)
+texture = ExtResource("4_hvwf0")
+
+[node name="DecorBlock4" type="Sprite2D" parent="."]
+position = Vector2(-21, 21)
+rotation = 1.3089969
+texture = ExtResource("4_hvwf0")
+
+[node name="DecorBlock9" type="Sprite2D" parent="."]
+position = Vector2(44, 73)
+texture = ExtResource("5_taj7i")
+
+[node name="DecorBlock5" type="Sprite2D" parent="."]
+position = Vector2(-42, 54)
+texture = ExtResource("5_taj7i")
+
+[node name="DecorBlock7" type="Sprite2D" parent="."]
+position = Vector2(-15.999997, 42.000004)
+rotation = 0.7853982
+texture = ExtResource("6_v8l1s")
+
+[node name="DecorBlock6" type="Sprite2D" parent="."]
+position = Vector2(-96, 54)
+texture = ExtResource("6_v8l1s")
+
+[node name="DecorBlock10" type="Sprite2D" parent="."]
+position = Vector2(-50, 25.999996)
+rotation = -0.40142572
+scale = Vector2(0.99999994, 0.99999994)
+texture = ExtResource("1_3gj0k")
+
+[node name="Title" type="Label" parent="."]
+offset_left = -207.0
+offset_top = -66.0
+offset_right = 209.0
+offset_bottom = 30.0
+theme_override_colors/font_color = Color(0.34117648, 0.34117648, 0.34117648, 1)
+theme_override_fonts/font = ExtResource("1_ncp31")
+theme_override_font_sizes/font_size = 20
+text = "Game over"
+label_settings = SubResource("LabelSettings_dy3ie")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HeroDead" type="Sprite2D" parent="."]
+position = Vector2(-41, 65)
+texture = ExtResource("8_ke020")

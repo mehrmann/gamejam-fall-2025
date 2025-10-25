@@ -1,0 +1,110 @@
+[gd_scene load_steps=11 format=3 uid="uid://ddbbdktpneikx"]
+
+[ext_resource type="Script" uid="uid://dix168dcwn604" path="res://scripts/splash_screen.gd" id="1_n4g2v"]
+[ext_resource type="FontFile" uid="uid://carr16tyulr2d" path="res://assets/Kenney Blocks.ttf" id="2_hsxvm"]
+[ext_resource type="Texture2D" uid="uid://cfbm0hngibx7k" path="res://assets/decor_block2.png" id="3_w4c0s"]
+[ext_resource type="Texture2D" uid="uid://ijbydupj2w8t" path="res://assets/decor_block1.png" id="4_vob37"]
+[ext_resource type="Texture2D" uid="uid://ygku5rl4crnr" path="res://assets/decor_block3.png" id="5_w85c8"]
+[ext_resource type="Texture2D" uid="uid://dbp07frc381dt" path="res://assets/decor_block5.png" id="6_lentl"]
+[ext_resource type="Texture2D" uid="uid://dlh01lmnufl4o" path="res://assets/decor_block4.png" id="7_3x6pt"]
+[ext_resource type="Texture2D" uid="uid://dq0cqs0wplixs" path="res://assets/decor_block6.png" id="8_8fal6"]
+[ext_resource type="Texture2D" uid="uid://brj6hj0x6thpn" path="res://assets/Hero_single.png" id="9_wvxtc"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_hsxvm"]
+font_size = 64
+font_color = Color(0.16862746, 0.36078432, 0.4, 1)
+
+[node name="splash_screen" type="Node2D"]
+script = ExtResource("1_n4g2v")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(-1, 8)
+metadata/_edit_lock_ = true
+
+[node name="OuterBackground" type="ColorRect" parent="."]
+offset_left = -160.0
+offset_top = -82.0
+offset_right = 159.0
+offset_bottom = 96.0
+color = Color(0.3882353, 0.83137256, 0.92156863, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="BorderBackground" type="ColorRect" parent="OuterBackground"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 8.0
+offset_right = 313.0
+offset_bottom = 172.0
+color = Color(0.186, 0.2893333, 0.31, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="InnerBackground" type="ColorRect" parent="OuterBackground/BorderBackground"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 302.0
+offset_bottom = 162.0
+color = Color(0.3882353, 0.83137256, 0.92156863, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="Title" type="Label" parent="."]
+offset_left = -118.0
+offset_top = -76.0
+offset_right = 122.0
+offset_bottom = 20.0
+theme_override_colors/font_color = Color(0.34117648, 0.34117648, 0.34117648, 1)
+theme_override_fonts/font = ExtResource("2_hsxvm")
+theme_override_font_sizes/font_size = 20
+text = "Start"
+label_settings = SubResource("LabelSettings_hsxvm")
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="HeroSingle" type="Sprite2D" parent="."]
+position = Vector2(-54, 11)
+texture = ExtResource("9_wvxtc")
+
+[node name="Blocks" type="Node2D" parent="."]
+
+[node name="DecorBlock7" type="Sprite2D" parent="Blocks"]
+position = Vector2(37, 73)
+rotation = -3.1415925
+texture = ExtResource("3_w4c0s")
+
+[node name="DecorBlock1" type="Sprite2D" parent="Blocks"]
+position = Vector2(-18, 73)
+texture = ExtResource("4_vob37")
+
+[node name="DecorBlock2" type="Sprite2D" parent="Blocks"]
+position = Vector2(-55, 55)
+rotation = 1.5707964
+texture = ExtResource("3_w4c0s")
+
+[node name="DecorBlock10" type="Sprite2D" parent="Blocks"]
+position = Vector2(109, 73)
+texture = ExtResource("5_w85c8")
+
+[node name="DecorBlock3" type="Sprite2D" parent="Blocks"]
+position = Vector2(-56, 54)
+texture = ExtResource("5_w85c8")
+
+[node name="DecorBlock8" type="Sprite2D" parent="Blocks"]
+position = Vector2(-2, 35)
+texture = ExtResource("6_lentl")
+
+[node name="DecorBlock9" type="Sprite2D" parent="Blocks"]
+position = Vector2(-19, 54)
+texture = ExtResource("7_3x6pt")
+
+[node name="DecorBlock4" type="Sprite2D" parent="Blocks"]
+position = Vector2(-111, 73)
+texture = ExtResource("7_3x6pt")
+
+[node name="DecorBlock5" type="Sprite2D" parent="Blocks"]
+position = Vector2(-56, 73)
+texture = ExtResource("6_lentl")
+
+[node name="DecorBlock6" type="Sprite2D" parent="Blocks"]
+position = Vector2(-38, 54)
+texture = ExtResource("8_8fal6")

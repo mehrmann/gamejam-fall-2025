@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="godot-driller"
-run/main_scene="uid://c4775a5ltcdgv"
+run/main_scene="uid://ddbbdktpneikx"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
