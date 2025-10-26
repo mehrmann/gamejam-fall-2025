@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://vemuv1dds6gc"]
+[gd_scene load_steps=12 format=3 uid="uid://vemuv1dds6gc"]
 
 [ext_resource type="Script" uid="uid://05mlko04fy4c" path="res://scripts/splash_screen.gd" id="1_n4g2v"]
 [ext_resource type="FontFile" uid="uid://carr16tyulr2d" path="res://assets/Kenney Blocks.ttf" id="2_hsxvm"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://dlh01lmnufl4o" path="res://assets/decor_block4.png" id="7_3x6pt"]
 [ext_resource type="Texture2D" uid="uid://dq0cqs0wplixs" path="res://assets/decor_block6.png" id="8_8fal6"]
 [ext_resource type="Texture2D" uid="uid://brj6hj0x6thpn" path="res://assets/Hero_single.png" id="9_wvxtc"]
+[ext_resource type="AudioStream" uid="uid://danf1r7ossy1" path="res://assets/music/arcade-beat-323176.mp3" id="10_vob37"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_hsxvm"]
 font_size = 64
@@ -108,3 +109,7 @@ texture = ExtResource("6_lentl")
 [node name="DecorBlock6" type="Sprite2D" parent="Blocks"]
 position = Vector2(-38, 54)
 texture = ExtResource("8_8fal6")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("10_vob37")
+autoplay = true
