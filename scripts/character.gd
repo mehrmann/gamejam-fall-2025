@@ -12,6 +12,10 @@ var break_block_sound = preload("res://assets/sounds/break_block.wav")
 var splat_sound = preload("res://assets/sounds/splat.wav")
 
 var energy = 100
+signal energy_updated(energy)
+var maxDepth = -180
+signal maxDepth_updated(maxDepth)
+
 
 func _physics_process(delta:float) -> void:
 	if not is_on_floor():
@@ -30,6 +34,7 @@ func _physics_process(delta:float) -> void:
 	
 	if Input.is_action_just_pressed("drill"):
 		energy -= 1
+		energy_updated.emit(energy)
 		if Input.is_action_pressed("ui_down"):
 			for body in bottom_tool.get_overlapping_bodies():
 				body.health -= 1
@@ -45,6 +50,10 @@ func _physics_process(delta:float) -> void:
 				body.health -= 1
 				if body.health == 0:
 					break_block(body)
+	
+	if global_position.y > maxDepth:
+		maxDepth = global_position.y
+		maxDepth_updated.emit(int(round((maxDepth + 180)/18)))
 
 	move_and_slide()
 

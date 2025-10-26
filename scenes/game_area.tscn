@@ -16,6 +16,7 @@ normal = Vector2(1, 0)
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_vlxm1"]
 normal = Vector2(-1, 0)
+distance = 3.0
 
 [node name="Game Area" type="StaticBody2D"]
 collision_mask = 3
@@ -57,7 +58,7 @@ position = Vector2(-96, 0)
 shape = SubResource("WorldBoundaryShape2D_4eb3c")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(96, 0)
+position = Vector2(93, 0)
 shape = SubResource("WorldBoundaryShape2D_vlxm1")
 
 [connection signal="body_entered" from="bottom/kill_zone" to="." method="_on_kill_zone_body_entered"]
