@@ -10,9 +10,9 @@ This project uses Godot 4.5 for game development.
 
 The project includes automated web builds for every push and pull request.
 
-### PR Preview Setup (GitHub Pages - Default)
+### PR Preview Setup
 
-The workflow is configured to use **GitHub Pages** for PR previews - no external services or tokens required!
+The workflow uses **GitHub Pages** to deploy PR previews - no external services or tokens required!
 
 **One-time setup:**
 
@@ -26,63 +26,14 @@ The workflow is configured to use **GitHub Pages** for PR previews - no external
 Once configured, every pull request will automatically:
 - Build the web version
 - Deploy it to `https://{username}.github.io/{repo}/pr-preview/pr-{number}/`
-- Comment on the PR with the preview link
+- Post a comment on the PR with a direct link to test the game
 
-**Note:** The PR preview action will automatically post a comment with the preview URL.
+### How It Works
 
-### Alternative Hosting Options
-
-Want to use a different hosting service? Here are some alternatives:
-
-#### Option 1: Netlify
-Replace the "Deploy PR Preview" step with:
-```yaml
-- name: Deploy to Netlify
-  if: github.event_name == 'pull_request'
-  uses: nwtgck/actions-netlify@v3
-  with:
-    publish-dir: build/web
-    production-deploy: false
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    enable-pull-request-comment: true
-    enable-commit-comment: false
-```
-No secrets needed - uses GitHub token automatically.
-
-#### Option 2: Cloudflare Pages
-```yaml
-- name: Deploy to Cloudflare Pages
-  if: github.event_name == 'pull_request'
-  uses: cloudflare/wrangler-action@v3
-  with:
-    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    command: pages deploy build/web --project-name=godot-driller
-```
-Requires: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets.
-
-#### Option 3: Vercel
-```yaml
-- name: Deploy to Vercel
-  if: github.event_name == 'pull_request'
-  uses: amondnet/vercel-action@v25
-  with:
-    vercel-token: ${{ secrets.VERCEL_TOKEN }}
-    vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-    vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-    working-directory: build/web
-```
-Requires: Vercel account and three secrets.
-
-#### Option 4: Surge.sh
-```yaml
-- name: Deploy to Surge
-  if: github.event_name == 'pull_request'
-  run: |
-    npm install -g surge
-    surge build/web godot-driller-pr-${{ github.event.pull_request.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
-```
-Requires: `SURGE_TOKEN` secret (get with `surge token` command).
+- **PR builds**: Deployed to `pr-preview/pr-{number}/` subdirectory on GitHub Pages
+- **Main branch**: Deployed to the root of your GitHub Pages site
+- **Automatic cleanup**: PR previews are removed when the PR is closed
+- **Artifacts**: Web builds are also uploaded as artifacts (14-day retention)
 
 ### Manual Testing
 
