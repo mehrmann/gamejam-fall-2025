@@ -35,8 +35,20 @@ func _ready() -> void:
 	last_position = global_position
 
 func _physics_process(delta: float) -> void:
+	# Update resting state first so other boxes can check it reliably
+	# This must happen before can_shape_fall() is called by other boxes
+	is_resting = rest_timer >= REST_TIME_REQUIRED
+
 	# Check if this merged shape can fall by checking all bottom tiles
+	# This needs to be checked every frame as conditions can change
+	var previous_can_fall = can_fall
 	can_fall = can_shape_fall()
+
+	# If we just started falling, reset velocity accumulation
+	if can_fall and not previous_can_fall:
+		falling_velocity = 0.0
+		rest_timer = 0.0
+		is_resting = false  # Immediately mark as not resting
 
 	# Apply custom fake physics (gravity)
 	if not is_resting and can_fall:
@@ -95,6 +107,25 @@ func _physics_process(delta: float) -> void:
 						merge_bodies(self, overlapping, sensor)
 
 func can_shape_fall() -> bool:
+	# Determines if this merged shape can fall by checking all bottom tiles
+	#
+	# For merged shapes (L-shapes, T-shapes, etc.), the shape can only fall when
+	# ALL of its bottom tiles are unsupported. A tile is considered supported if:
+	# 1. There's solid ground below it
+	# 2. There's a RESTING box below it (not falling or unstable)
+	#
+	# Cascading behavior:
+	# When support is removed from a tower of boxes, they start falling in sequence.
+	# Due to Godot's node processing order, there may be a 1-frame delay per level,
+	# but this happens within 16ms per level and is imperceptible to players.
+	#
+	# Example: Tower of 3 boxes loses bottom support
+	# - Frame 1: Bottom box detects no support, is_resting becomes false
+	# - Frame 1-2: Middle box sees bottom box is not resting, starts falling
+	# - Frame 1-2: Top box sees middle box is not resting, starts falling
+	#
+	# All boxes typically start falling within the same frame or next frame.
+
 	# Find all bottom tiles (tiles that don't have another tile directly below them)
 	var occ = build_occupancy()
 	var bottom_tiles: Array[CollisionShape2D] = []
@@ -132,13 +163,18 @@ func can_shape_fall() -> bool:
 			if other_body is StaticBody2D:
 				# Check if it's another box that's also falling
 				if other_body.has_method("get") and other_body.get("falling_velocity") != null:
-					# It's a box - only consider it support if it's not falling
+					# It's a box - only consider it support if it's truly stable
+					# Check multiple stability indicators to avoid evaluation order issues
 					var other_falling_velocity = other_body.get("falling_velocity")
-					var other_can_fall = other_body.get("can_fall")
+					var other_is_resting = other_body.get("is_resting")
 
-					if abs(other_falling_velocity) < STOP_SPEED_THRESHOLD and not other_can_fall:
-						# Box below is stable, we have support
+					# A box is stable support if:
+					# 1. It has very low/no falling velocity, AND
+					# 2. It's in a resting state (has been stable for REST_TIME_REQUIRED)
+					if abs(other_falling_velocity) < STOP_SPEED_THRESHOLD and other_is_resting:
+						# Box below is truly stable, we have support
 						return false
+					# Otherwise, box below is falling or unstable, continue checking other tiles
 				else:
 					# It's solid ground (not a box), we have support
 					return false
