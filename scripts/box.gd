@@ -12,6 +12,9 @@ var rest_timer := 0.0
 var falling_velocity := 0.0  # Custom velocity for fake physics
 var last_position := Vector2.ZERO
 var can_fall := true  # Whether this merged shape can fall
+
+# Signal emitted when this box starts falling (loses support)
+signal started_falling
 enum colors {
 	red,
 	yellow,
@@ -44,11 +47,14 @@ func _physics_process(delta: float) -> void:
 	var previous_can_fall = can_fall
 	can_fall = can_shape_fall()
 
-	# If we just started falling, reset velocity accumulation
+	# If we just started falling, reset velocity accumulation and notify other boxes
 	if can_fall and not previous_can_fall:
 		falling_velocity = 0.0
 		rest_timer = 0.0
 		is_resting = false  # Immediately mark as not resting
+		started_falling.emit()
+		# Trigger re-evaluation for all other resting boxes in case they were supported by us
+		notify_boxes_above()
 
 	# Apply custom fake physics (gravity)
 	if not is_resting and can_fall:
@@ -106,6 +112,42 @@ func _physics_process(delta: float) -> void:
 					if overlapping.is_resting and overlapping.color == self.color:
 						merge_bodies(self, overlapping, sensor)
 
+func notify_boxes_above() -> void:
+	# When we start falling, notify boxes that might be supported by us
+	# Check above each of our collision shapes for other boxes
+	var space_state = get_world_2d().direct_space_state
+
+	for child in get_children():
+		if child is CollisionShape2D:
+			var query = PhysicsShapeQueryParameters2D.new()
+			query.shape = child.shape
+			# Check slightly above this tile
+			query.transform = Transform2D(0, child.global_position + Vector2(0, -FALL_CHECK_DISTANCE))
+			query.collision_mask = collision_mask
+			query.exclude = [self]
+
+			var results = space_state.intersect_shape(query, 10)
+
+			for result in results:
+				var other_body = result["collider"]
+				# If it's another box that's resting, tell it to re-check
+				if other_body is StaticBody2D and other_body.has_method("force_fall_check"):
+					other_body.force_fall_check()
+
+func force_fall_check() -> void:
+	# Called by boxes below us when they start falling
+	# Force immediate re-evaluation of our fall state
+	if is_resting:
+		can_fall = can_shape_fall()
+		if can_fall:
+			# We should also start falling!
+			falling_velocity = 0.0
+			rest_timer = 0.0
+			is_resting = false
+			started_falling.emit()
+			# Recursively notify boxes above us
+			notify_boxes_above()
+
 func can_shape_fall() -> bool:
 	# Determines if this merged shape can fall by checking all bottom tiles
 	#
@@ -115,16 +157,18 @@ func can_shape_fall() -> bool:
 	# 2. There's a RESTING box below it (not falling or unstable)
 	#
 	# Cascading behavior:
-	# When support is removed from a tower of boxes, they start falling in sequence.
-	# Due to Godot's node processing order, there may be a 1-frame delay per level,
-	# but this happens within 16ms per level and is imperceptible to players.
+	# When support is removed from a tower of boxes, they start falling immediately.
+	# This is handled via the notify_boxes_above() system:
 	#
 	# Example: Tower of 3 boxes loses bottom support
-	# - Frame 1: Bottom box detects no support, is_resting becomes false
-	# - Frame 1-2: Middle box sees bottom box is not resting, starts falling
-	# - Frame 1-2: Top box sees middle box is not resting, starts falling
+	# 1. Bottom box detects no support, starts falling
+	# 2. Bottom box calls notify_boxes_above()
+	# 3. Middle box receives force_fall_check(), re-evaluates, starts falling
+	# 4. Middle box calls notify_boxes_above()
+	# 5. Top box receives force_fall_check(), re-evaluates, starts falling
 	#
-	# All boxes typically start falling within the same frame or next frame.
+	# This entire cascade happens in a single frame via recursive notification,
+	# so all boxes in a tower start falling simultaneously when support is removed.
 
 	# Find all bottom tiles (tiles that don't have another tile directly below them)
 	var occ = build_occupancy()
