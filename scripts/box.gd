@@ -12,6 +12,7 @@ var rest_timer := 0.0
 var falling_velocity := 0.0  # Custom velocity for fake physics
 var last_position := Vector2.ZERO
 var can_fall := true  # Whether this merged shape can fall
+var being_notified := false  # Recursion guard for cascade notifications
 
 # Signal emitted when this box starts falling (loses support)
 signal started_falling
@@ -116,6 +117,7 @@ func notify_boxes_above() -> void:
 	# When we start falling, notify boxes that might be supported by us
 	# Check above each of our collision shapes for other boxes
 	var space_state = get_world_2d().direct_space_state
+	var notified_boxes := {}  # Track which boxes we've already notified to avoid duplicates
 
 	for child in get_children():
 		if child is CollisionShape2D:
@@ -131,22 +133,38 @@ func notify_boxes_above() -> void:
 			for result in results:
 				var other_body = result["collider"]
 				# If it's another box that's resting, tell it to re-check
+				# Only notify each box once to avoid redundant checks
 				if other_body is StaticBody2D and other_body.has_method("force_fall_check"):
-					other_body.force_fall_check()
+					if not notified_boxes.has(other_body):
+						notified_boxes[other_body] = true
+						other_body.force_fall_check()
 
 func force_fall_check() -> void:
 	# Called by boxes below us when they start falling
 	# Force immediate re-evaluation of our fall state
-	if is_resting:
-		can_fall = can_shape_fall()
-		if can_fall:
-			# We should also start falling!
-			falling_velocity = 0.0
-			rest_timer = 0.0
-			is_resting = false
-			started_falling.emit()
-			# Recursively notify boxes above us
-			notify_boxes_above()
+	#
+	# Multiple guards against infinite recursion:
+	# 1. Only process if currently resting (not already falling)
+	# 2. being_notified flag prevents re-entry during cascade
+
+	if not is_resting or being_notified:
+		return
+
+	# Set guard before any recursive calls
+	being_notified = true
+
+	can_fall = can_shape_fall()
+	if can_fall:
+		# We should also start falling!
+		falling_velocity = 0.0
+		rest_timer = 0.0
+		is_resting = false
+		started_falling.emit()
+		# Recursively notify boxes above us
+		notify_boxes_above()
+
+	# Clear guard after cascade completes
+	being_notified = false
 
 func can_shape_fall() -> bool:
 	# Determines if this merged shape can fall by checking all bottom tiles
@@ -169,6 +187,19 @@ func can_shape_fall() -> bool:
 	#
 	# This entire cascade happens in a single frame via recursive notification,
 	# so all boxes in a tower start falling simultaneously when support is removed.
+	#
+	# Infinite recursion protection:
+	# Even with complex interlocking shapes (C-shapes, circular dependencies, etc.),
+	# infinite recursion is prevented by:
+	# 1. is_resting check - once a box starts falling, it won't process again
+	# 2. being_notified flag - prevents re-entry during cascade propagation
+	# 3. notified_boxes dict - each box is only notified once per cascade
+	#
+	# Example with circular dependency:
+	# Box A (supports Box B) loses support → A.is_resting=false, being_notified=true
+	# → notifies Box B → B checks, starts falling → B.is_resting=false
+	# → B tries to notify A → A.force_fall_check() sees being_notified=true → returns
+	# Result: Safe, no infinite recursion
 
 	# Find all bottom tiles (tiles that don't have another tile directly below them)
 	var occ = build_occupancy()
