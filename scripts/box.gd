@@ -24,6 +24,10 @@ var merge_candidates_map = {}
 var health = 1
 
 func _ready() -> void:
+	# Ensure spawn position is grid-aligned on x-axis
+	var snapped_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
+	global_position.x = snapped_x
+
 	randomize_color()
 	$sprite.animation = colors.keys()[color]
 
