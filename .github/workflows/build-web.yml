@@ -13,16 +13,11 @@ env:
   EXPORT_NAME: godot-driller
 
 jobs:
-  export-web:
-    name: Web Export
+  build-web:
+    name: Build Web Export
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.5
-    permissions:
-      contents: write
-      pull-requests: write
-      pages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,15 +34,29 @@ jobs:
           mkdir -p build/web
           godot --headless --verbose --export-release "Web" build/web/index.html
 
-      - name: Upload Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-build-${{ github.sha }}
           path: build/web
           retention-days: 14
 
+  deploy-preview:
+    name: Deploy PR Preview
+    needs: build-web
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web
+
       - name: Deploy PR Preview to GitHub Pages
-        if: github.event_name == 'pull_request'
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: build/web
@@ -55,7 +64,6 @@ jobs:
           umbrella-dir: pr-preview
 
       - name: Add PR Comment with Preview Link
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -100,8 +108,21 @@ jobs:
               body: comment
             });
 
+  deploy-main:
+    name: Deploy to GitHub Pages (Main)
+    needs: build-web
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web
+
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
