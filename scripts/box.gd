@@ -1,7 +1,7 @@
 extends RigidBody2D
 
-const STOP_SPEED_THRESHOLD = 2.0
-const REST_TIME_REQUIRED = .25
+const STOP_SPEED_THRESHOLD = 5.0
+const REST_TIME_REQUIRED = 0.3
 const TILE_SIZE := 18  
 
 var rest_timer := 0.0
@@ -32,13 +32,18 @@ func _physics_process(delta: float) -> void:
 		rest_timer += delta
 	else:
 		rest_timer = 0.0
-	
+
+	var was_resting = is_resting
 	is_resting = rest_timer >= REST_TIME_REQUIRED
-	
+
+	# Snap to grid when first coming to rest
+	if is_resting and not was_resting:
+		call_deferred("snap_to_grid")
+
 	if is_resting and color == colors.unmoveable:
 		freeze = true
 		can_sleep = true
-	
+
 	if is_resting and color < colors.unbreakable:
 		for sensor in sensors:
 			if sensor != null and sensor.has_overlapping_bodies():
@@ -50,30 +55,38 @@ func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
 	if host == guest or host.is_queued_for_deletion() or guest.is_queued_for_deletion():
 		return
 
+	# Stop all movement for stable merging
+	host.linear_velocity = Vector2.ZERO
+	guest.linear_velocity = Vector2.ZERO
+
+	# Add mass from guest to host
 	host.mass += guest.mass
 
-	host.linear_velocity = Vector2.ZERO
-	#host.angular_velocity = 0.0
-
+	# Transfer all children from guest to host
 	for child in guest.get_children():
 		var oldName = child.name
 		child.reparent(host, true)
 		child.name = guest.name + "_" + oldName
 		if child is Area2D:
 			sensors.append(child)
-			#child.body_entered.connect(on_sensor_body_entered.bind(child))
-			#child.body_exited.connect(on_sensor_body_exited.bind(child))
-		
-	#print_tree_pretty()
+
+	# Remove the merged sensor
 	sensors.erase(sensor)
-	sensor.queue_free()
-	guest.queue_free()
-	
+	sensor.call_deferred("queue_free")
+	guest.call_deferred("queue_free")
+
+	# Snap everything to grid after merge for proper alignment
+	call_deferred("snap_to_grid")
+	call_deferred("update_sprite_frames")
+
+func update_sprite_frames() -> void:
+	# Update all sprite frames based on neighbor occupancy
 	var occ = build_occupancy()
 	for collisionShape in get_children().filter(func(node: Node2D): return node is CollisionShape2D):
 		var neighbor_mask = get_neighbors_for(collisionShape, occ)
-		#print(collisionShape.name + "=" + str(neighbor_mask))
-		(get_node(collisionShape.name.replace("collisionshape", "sprite")) as AnimatedSprite2D).frame = neighbor_mask
+		var sprite_name = collisionShape.name.replace("collisionshape", "sprite")
+		if has_node(sprite_name):
+			(get_node(sprite_name) as AnimatedSprite2D).frame = neighbor_mask
 
 func world_to_cell(p: Vector2) -> Vector2i:
 	return Vector2i(
@@ -131,8 +144,15 @@ func randomize_color():
 		else:
 			color = colors.unmoveable
 
-func snap_to_grid(world_pos: Vector2, grid_origin: Vector2, cell_size: float) -> Vector2:
-	var local_pos = world_pos - grid_origin
-	var cell_x = round(local_pos.x / cell_size)
-	var cell_y = round(local_pos.y / cell_size)
-	return grid_origin + Vector2(cell_x * cell_size, cell_y * cell_size)
+func snap_to_grid() -> void:
+	# Snap the body's position to the nearest grid point
+	var snapped_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
+	var snapped_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
+	global_position = Vector2(snapped_x, snapped_y)
+
+	# Also snap all child collision shapes and sprites to maintain grid alignment
+	for child in get_children():
+		if child is CollisionShape2D or child is AnimatedSprite2D:
+			var local_snapped_x = round(child.position.x / TILE_SIZE) * TILE_SIZE
+			var local_snapped_y = round(child.position.y / TILE_SIZE) * TILE_SIZE
+			child.position = Vector2(local_snapped_x, local_snapped_y)

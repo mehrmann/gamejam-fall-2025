@@ -1,7 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://c1l68ltryxasu"]
+[gd_scene load_steps=6 format=3 uid="uid://c1l68ltryxasu"]
 
 [ext_resource type="Script" uid="uid://1p25x1mcuvx2" path="res://scripts/box.gd" id="1_ks2v0"]
 [ext_resource type="SpriteFrames" uid="uid://cd2jv1ki8dvjh" path="res://assets/blocks.tres" id="2_ks2v0"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_box"]
+friction = 0.8
+bounce = 0.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_telwu"]
 size = Vector2(18, 18)
@@ -12,8 +16,12 @@ radius = 4.0
 [node name="Box" type="RigidBody2D" groups=["block"]]
 collision_layer = 2
 collision_mask = 3
+physics_material_override = SubResource("PhysicsMaterial_box")
+linear_damp = 1.0
 lock_rotation = true
 freeze_mode = 1
+contact_monitor = true
+max_contacts_reported = 4
 script = ExtResource("1_ks2v0")
 metadata/_edit_vertical_guides_ = [-9.0, 9.0]
 
@@ -22,7 +30,6 @@ sprite_frames = ExtResource("2_ks2v0")
 animation = &"unmoveable"
 
 [node name="collisionshape" type="CollisionShape2D" parent="."]
-scale = Vector2(0.999, 0.999)
 shape = SubResource("RectangleShape2D_telwu")
 
 [node name="sensor_right" type="Area2D" parent="."]
