@@ -75,7 +75,9 @@ func _physics_process(delta: float) -> void:
 				var query = PhysicsShapeQueryParameters2D.new()
 				query.shape = child.shape
 				query.transform = Transform2D(0, child.global_position + movement)
-				query.collision_mask = collision_mask
+				# Detect both ground (layer 1) AND boxes (layer 2) for collision detection
+				# This is separate from the body's collision_mask which only affects physics response
+				query.collision_mask = 3
 				query.exclude = [self]
 
 				var result = space_state.intersect_shape(query, 1)
@@ -125,7 +127,7 @@ func notify_boxes_above() -> void:
 			query.shape = child.shape
 			# Check slightly above this tile
 			query.transform = Transform2D(0, child.global_position + Vector2(0, -FALL_CHECK_DISTANCE))
-			query.collision_mask = collision_mask
+			query.collision_mask = 2  # Only detect boxes (layer 2) above us
 			query.exclude = [self]
 
 			var results = space_state.intersect_shape(query, 10)
@@ -226,7 +228,7 @@ func can_shape_fall() -> bool:
 		var query = PhysicsShapeQueryParameters2D.new()
 		query.shape = tile.shape
 		query.transform = Transform2D(0, tile.global_position + Vector2(0, FALL_CHECK_DISTANCE))
-		query.collision_mask = collision_mask
+		query.collision_mask = 3  # Detect both ground (layer 1) and boxes (layer 2)
 		query.exclude = [self]
 
 		var results = space_state.intersect_shape(query, 10)
