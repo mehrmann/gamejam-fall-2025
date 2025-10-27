@@ -59,7 +59,7 @@ func _physics_process(delta:float) -> void:
 
 
 func _on_head_body_entered(body: Node2D) -> void:
-	if body is CharacterBody2D and body.has_method("get"):
+	if body is StaticBody2D and body.has_method("get"):
 		# Check if this is a falling box (has falling_velocity property)
 		if body.get("falling_velocity") != null:
 			var falling_velocity = body.get("falling_velocity")

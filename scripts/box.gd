@@ -1,16 +1,17 @@
-extends CharacterBody2D
+extends StaticBody2D
 
 const GRAVITY = 500.0  # Pixels per second squared
 const MAX_FALL_SPEED = 400.0  # Maximum falling speed
 const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
 const REST_TIME_REQUIRED = 0.1  # Time required to be considered resting
 const TILE_SIZE := 18
+const FALL_CHECK_DISTANCE := 2.0  # How far below to check for support
 
 var rest_timer := 0.0
 @export var is_resting := false
 var falling_velocity := 0.0  # Custom velocity for fake physics
 var last_position := Vector2.ZERO
-var moved_this_frame := false
+var can_fall := true  # Whether this merged shape can fall
 enum colors {
 	red,
 	yellow,
@@ -34,37 +35,53 @@ func _ready() -> void:
 	last_position = global_position
 
 func _physics_process(delta: float) -> void:
+	# Check if this merged shape can fall by checking all bottom tiles
+	can_fall = can_shape_fall()
+
 	# Apply custom fake physics (gravity)
-	if not is_resting:
+	if not is_resting and can_fall:
 		falling_velocity += GRAVITY * delta
 		falling_velocity = min(falling_velocity, MAX_FALL_SPEED)
 
-		# Set velocity for CharacterBody2D
-		velocity.y = falling_velocity
-		velocity.x = 0  # No horizontal movement
+		# Calculate movement for this frame
+		var movement = Vector2(0, falling_velocity * delta)
 
-		# Move and check for collision
-		var collision = move_and_collide(velocity * delta)
+		# Check for collision using physics query
+		var space_state = get_world_2d().direct_space_state
+		var collision_detected = false
 
-		if collision:
+		# Test movement for all collision shapes
+		for child in get_children():
+			if child is CollisionShape2D:
+				var query = PhysicsShapeQueryParameters2D.new()
+				query.shape = child.shape
+				query.transform = Transform2D(0, child.global_position + movement)
+				query.collision_mask = collision_mask
+				query.exclude = [self]
+
+				var result = space_state.intersect_shape(query, 1)
+				if result.size() > 0:
+					collision_detected = true
+					break
+
+		if collision_detected:
 			# Hit something, snap to grid and stop
 			snap_to_grid_position()
 			falling_velocity = 0
-			velocity = Vector2.ZERO
 			rest_timer = 0.0
 		else:
-			# Check if we actually moved
-			var distance_moved = global_position.distance_to(last_position)
-			if distance_moved < STOP_SPEED_THRESHOLD * delta:
-				rest_timer += delta
-			else:
-				rest_timer = 0.0
-
-	# Update resting state
-	if falling_velocity < STOP_SPEED_THRESHOLD:
-		rest_timer += delta
+			# Move the box
+			global_position += movement
+			rest_timer = 0.0
 	else:
-		rest_timer = 0.0
+		# Not falling, increase rest timer
+		if falling_velocity < STOP_SPEED_THRESHOLD:
+			rest_timer += delta
+		else:
+			rest_timer = 0.0
+
+		if rest_timer >= REST_TIME_REQUIRED:
+			falling_velocity = 0
 
 	is_resting = rest_timer >= REST_TIME_REQUIRED
 	last_position = global_position
@@ -77,19 +94,74 @@ func _physics_process(delta: float) -> void:
 					if overlapping.is_resting and overlapping.color == self.color:
 						merge_bodies(self, overlapping, sensor)
 
+func can_shape_fall() -> bool:
+	# Find all bottom tiles (tiles that don't have another tile directly below them)
+	var occ = build_occupancy()
+	var bottom_tiles: Array[CollisionShape2D] = []
+
+	for child in get_children():
+		if child is CollisionShape2D:
+			var cell = world_to_cell(child.global_position)
+			var below_cell = cell + Vector2i(0, 1)
+
+			# If there's no tile directly below this one in our merged shape, it's a bottom tile
+			if not occ.has(below_cell):
+				bottom_tiles.append(child)
+
+	# If no bottom tiles found, something is wrong - don't fall
+	if bottom_tiles.is_empty():
+		return false
+
+	# Check if ALL bottom tiles have no support below them
+	var space_state = get_world_2d().direct_space_state
+
+	for tile in bottom_tiles:
+		# Check for solid ground or other boxes below this tile
+		var query = PhysicsShapeQueryParameters2D.new()
+		query.shape = tile.shape
+		query.transform = Transform2D(0, tile.global_position + Vector2(0, FALL_CHECK_DISTANCE))
+		query.collision_mask = collision_mask
+		query.exclude = [self]
+
+		var results = space_state.intersect_shape(query, 10)
+
+		for result in results:
+			var other_body = result["collider"]
+
+			# Check if there's a box or solid ground below
+			if other_body is StaticBody2D:
+				# Check if it's another box that's also falling
+				if other_body.has_method("get") and other_body.get("falling_velocity") != null:
+					# It's a box - only consider it support if it's not falling
+					var other_falling_velocity = other_body.get("falling_velocity")
+					var other_can_fall = other_body.get("can_fall")
+
+					if abs(other_falling_velocity) < STOP_SPEED_THRESHOLD and not other_can_fall:
+						# Box below is stable, we have support
+						return false
+				else:
+					# It's solid ground (not a box), we have support
+					return false
+			elif other_body is TileMap or other_body is CharacterBody2D:
+				# Ground or player provides support
+				return false
+
+	# All bottom tiles are unsupported, we can fall
+	return true
+
 func snap_to_grid_position() -> void:
 	# Snap to nearest grid position
 	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
 	var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
 	global_position = Vector2(grid_x, grid_y)
 
-func merge_bodies(host: CharacterBody2D, guest: CharacterBody2D, sensor: Area2D):
+func merge_bodies(host: StaticBody2D, guest: StaticBody2D, sensor: Area2D):
 	if host == guest or host.is_queued_for_deletion() or guest.is_queued_for_deletion():
 		return
 
 	# Reset velocities
 	host.falling_velocity = 0.0
-	host.velocity = Vector2.ZERO
+	host.rest_timer = 0.0
 
 	for child in guest.get_children():
 		var oldName = child.name
