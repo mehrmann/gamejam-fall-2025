@@ -1,11 +1,16 @@
-extends RigidBody2D
+extends CharacterBody2D
 
-const STOP_SPEED_THRESHOLD = 2.0
-const REST_TIME_REQUIRED = .25
-const TILE_SIZE := 18  
+const GRAVITY = 500.0  # Pixels per second squared
+const MAX_FALL_SPEED = 400.0  # Maximum falling speed
+const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
+const REST_TIME_REQUIRED = 0.1  # Time required to be considered resting
+const TILE_SIZE := 18
 
 var rest_timer := 0.0
 @export var is_resting := false
+var falling_velocity := 0.0  # Custom velocity for fake physics
+var last_position := Vector2.ZERO
+var moved_this_frame := false
 enum colors {
 	red,
 	yellow,
@@ -26,19 +31,45 @@ var health = 1
 func _ready() -> void:
 	randomize_color()
 	$sprite.animation = colors.keys()[color]
+	last_position = global_position
 
 func _physics_process(delta: float) -> void:
-	if linear_velocity.length() < STOP_SPEED_THRESHOLD:
+	# Apply custom fake physics (gravity)
+	if not is_resting:
+		falling_velocity += GRAVITY * delta
+		falling_velocity = min(falling_velocity, MAX_FALL_SPEED)
+
+		# Set velocity for CharacterBody2D
+		velocity.y = falling_velocity
+		velocity.x = 0  # No horizontal movement
+
+		# Move and check for collision
+		var collision = move_and_collide(velocity * delta)
+
+		if collision:
+			# Hit something, snap to grid and stop
+			snap_to_grid_position()
+			falling_velocity = 0
+			velocity = Vector2.ZERO
+			rest_timer = 0.0
+		else:
+			# Check if we actually moved
+			var distance_moved = global_position.distance_to(last_position)
+			if distance_moved < STOP_SPEED_THRESHOLD * delta:
+				rest_timer += delta
+			else:
+				rest_timer = 0.0
+
+	# Update resting state
+	if falling_velocity < STOP_SPEED_THRESHOLD:
 		rest_timer += delta
 	else:
 		rest_timer = 0.0
-	
+
 	is_resting = rest_timer >= REST_TIME_REQUIRED
-	
-	if is_resting and color == colors.unmoveable:
-		freeze = true
-		can_sleep = true
-	
+	last_position = global_position
+
+	# Handle merging
 	if is_resting and color < colors.unbreakable:
 		for sensor in sensors:
 			if sensor != null and sensor.has_overlapping_bodies():
@@ -46,14 +77,19 @@ func _physics_process(delta: float) -> void:
 					if overlapping.is_resting and overlapping.color == self.color:
 						merge_bodies(self, overlapping, sensor)
 
-func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
+func snap_to_grid_position() -> void:
+	# Snap to nearest grid position
+	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
+	var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
+	global_position = Vector2(grid_x, grid_y)
+
+func merge_bodies(host: CharacterBody2D, guest: CharacterBody2D, sensor: Area2D):
 	if host == guest or host.is_queued_for_deletion() or guest.is_queued_for_deletion():
 		return
 
-	host.mass += guest.mass
-
-	host.linear_velocity = Vector2.ZERO
-	#host.angular_velocity = 0.0
+	# Reset velocities
+	host.falling_velocity = 0.0
+	host.velocity = Vector2.ZERO
 
 	for child in guest.get_children():
 		var oldName = child.name

@@ -59,12 +59,14 @@ func _physics_process(delta:float) -> void:
 
 
 func _on_head_body_entered(body: Node2D) -> void:
-	if body is RigidBody2D:
-		var block = body as RigidBody2D
-		if block.linear_velocity.abs().y > 0:
-			audio_player.stream = splat_sound
-			audio_player.play()
-			$game_over_timer.start()
+	if body is CharacterBody2D and body.has_method("get"):
+		# Check if this is a falling box (has falling_velocity property)
+		if body.get("falling_velocity") != null:
+			var falling_velocity = body.get("falling_velocity")
+			if abs(falling_velocity) > 0:
+				audio_player.stream = splat_sound
+				audio_player.play()
+				$game_over_timer.start()
 
 
 func break_block(body):
