@@ -1,0 +1,71 @@
+name: Build Web Version
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  GODOT_VERSION: 4.5.0
+  EXPORT_NAME: godot-driller
+
+jobs:
+  export-web:
+    name: Web Export
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux_x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux_x86_64.zip
+          chmod +x Godot_v${GODOT_VERSION}-stable_linux_x86_64
+          mkdir -v -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          unzip -q Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+          rm -rf Godot_v${GODOT_VERSION}-stable_export_templates.tpz templates
+
+      - name: Export Web
+        run: |
+          mkdir -p build/web
+          ./Godot_v${GODOT_VERSION}-stable_linux_x86_64 --headless --export-release "Web" build/web/index.html
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web
+          retention-days: 14
+
+      - name: Add PR Comment with Download Link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const comment = `## 🎮 Web Build Ready!\n\nThe web build for this PR is complete!\n\n**To test:**\n1. Visit the [workflow run](${artifactUrl})\n2. Download the \`web-build-${{ github.sha }}\` artifact\n3. Extract the zip file\n4. Serve the files using a local web server:\n   \`\`\`bash\n   python -m http.server 8000\n   # or\n   npx serve .\n   \`\`\`\n5. Open http://localhost:8000/index.html in your browser\n\n**Note:** The artifact will be available for 14 days.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          cname: false
