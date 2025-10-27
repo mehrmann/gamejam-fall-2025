@@ -9,13 +9,15 @@ on:
       - '*'
 
 env:
-  GODOT_VERSION: 4.5.0
+  GODOT_VERSION: 4.5
   EXPORT_NAME: godot-driller
 
 jobs:
   export-web:
     name: Web Export
     runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.5
     permissions:
       contents: write
     steps:
@@ -24,21 +26,15 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Godot
+      - name: Setup Export Templates
         run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux_x86_64.zip
-          unzip -q Godot_v${GODOT_VERSION}-stable_linux_x86_64.zip
-          chmod +x Godot_v${GODOT_VERSION}-stable_linux_x86_64
           mkdir -v -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
-          unzip -q Godot_v${GODOT_VERSION}-stable_export_templates.tpz
-          mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
-          rm -rf Godot_v${GODOT_VERSION}-stable_export_templates.tpz templates
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
 
       - name: Export Web
         run: |
           mkdir -p build/web
-          ./Godot_v${GODOT_VERSION}-stable_linux_x86_64 --headless --export-release "Web" build/web/index.html
+          godot --headless --verbose --export-release "Web" build/web/index.html
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
