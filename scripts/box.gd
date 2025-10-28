@@ -3,7 +3,7 @@ extends StaticBody2D
 const GRAVITY = 500.0  # Pixels per second squared
 const MAX_FALL_SPEED = 400.0  # Maximum falling speed
 const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
-const REST_TIME_REQUIRED = 0.1  # Time required to be considered resting
+const REST_TIME_REQUIRED = 0.05  # Time required to be considered resting (fast for quick merges)
 const TILE_SIZE := 18
 const FALL_CHECK_DISTANCE := 10.0  # How far below to check for support (larger for more reliable detection)
 
@@ -65,21 +65,25 @@ func _physics_process(delta: float) -> void:
 		falling_velocity += GRAVITY * delta
 		falling_velocity = min(falling_velocity, MAX_FALL_SPEED)
 
-		# Calculate movement for this frame
-		var movement = Vector2(0, falling_velocity * delta)
+		# Calculate movement for this frame, limited to half a tile to ensure reliable collision detection
+		var movement_amount = falling_velocity * delta
+		movement_amount = min(movement_amount, TILE_SIZE / 2.0)
+		var movement = Vector2(0, movement_amount)
 
-		# Check for collision using physics query
+		# Move the box first
+		global_position += movement
+
+		# Check if we're now colliding with something
 		var space_state = get_world_2d().direct_space_state
 		var collision_detected = false
 
-		# Test movement for all collision shapes
+		# Test all collision shapes for overlap
 		for child in get_children():
 			if child is CollisionShape2D:
 				var query = PhysicsShapeQueryParameters2D.new()
 				query.shape = child.shape
-				query.transform = Transform2D(0, child.global_position + movement)
+				query.transform = Transform2D(0, child.global_position)
 				# Detect both ground (layer 1) AND boxes (layer 2) for collision detection
-				# This is separate from the body's collision_mask which only affects physics response
 				query.collision_mask = 3
 				query.exclude = [self]
 
@@ -89,13 +93,11 @@ func _physics_process(delta: float) -> void:
 					break
 
 		if collision_detected:
-			# Hit something, snap to grid position ABOVE (floor y to avoid snapping through)
-			snap_to_grid_position_above()
+			# We're overlapping something, snap to proper grid position
+			snap_to_grid_position_on_collision()
 			falling_velocity = 0
 			rest_timer = 0.0
 		else:
-			# Move the box
-			global_position += movement
 			rest_timer = 0.0
 	else:
 		# Not falling, increase rest timer
@@ -271,11 +273,13 @@ func snap_to_grid_position() -> void:
 	var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
 	global_position = Vector2(grid_x, grid_y)
 
-func snap_to_grid_position_above() -> void:
-	# Snap to grid position above current position (used when landing from fall)
-	# Uses floor() to ensure we snap UP, not down through the object we collided with
+func snap_to_grid_position_on_collision() -> void:
+	# Snap to grid when we've collided with something below
+	# We've moved too far and are now overlapping
+	# Move back by half a tile then floor to get the grid position above the collision
 	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
-	var grid_y = floor(global_position.y / TILE_SIZE) * TILE_SIZE
+	var grid_y = floor((global_position.y - TILE_SIZE / 2) / TILE_SIZE) * TILE_SIZE
+
 	global_position = Vector2(grid_x, grid_y)
 
 func merge_bodies(host: StaticBody2D, guest: StaticBody2D, sensor: Area2D):
