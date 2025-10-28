@@ -89,8 +89,7 @@ func _physics_process(delta: float) -> void:
 					break
 
 		if collision_detected:
-			# Would hit something - move most of the way there, then snap
-			global_position += movement * 0.8  # Move 80% of the way
+			# Don't move at all if would collide - stay at current grid position
 			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
 			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
 			global_position = Vector2(grid_x, grid_y)
@@ -246,6 +245,10 @@ func can_shape_fall() -> bool:
 			if other_body is StaticBody2D:
 				# Check if it's another box that's also falling
 				if other_body.has_method("get") and other_body.get("falling_velocity") != null:
+					# Skip boxes that are queued for deletion (just got mined)
+					if other_body.is_queued_for_deletion():
+						continue
+
 					# It's a box - only consider it support if it's truly stable
 					# Check multiple stability indicators to avoid evaluation order issues
 					var other_falling_velocity = other_body.get("falling_velocity")
