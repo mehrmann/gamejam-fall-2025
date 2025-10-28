@@ -3,7 +3,7 @@ extends StaticBody2D
 const GRAVITY = 500.0  # Pixels per second squared
 const MAX_FALL_SPEED = 400.0  # Maximum falling speed
 const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
-const REST_TIME_REQUIRED = 0.1  # Time required to be considered resting
+const REST_TIME_REQUIRED = 0.05  # Time required to be considered resting (shorter for faster merges)
 const TILE_SIZE := 18
 const FALL_CHECK_DISTANCE := 10.0  # How far below to check for support (larger for more reliable detection)
 
@@ -89,8 +89,11 @@ func _physics_process(delta: float) -> void:
 					break
 
 		if collision_detected:
-			# Hit something, snap to grid position ABOVE (floor y to avoid snapping through)
-			snap_to_grid_position_above()
+			# Would hit something - move most of the way there, then snap
+			global_position += movement * 0.8  # Move 80% of the way
+			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
+			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
+			global_position = Vector2(grid_x, grid_y)
 			falling_velocity = 0
 			rest_timer = 0.0
 		else:
@@ -269,13 +272,6 @@ func snap_to_grid_position() -> void:
 	# Snap to nearest grid position (used on spawn)
 	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
 	var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
-	global_position = Vector2(grid_x, grid_y)
-
-func snap_to_grid_position_above() -> void:
-	# Snap to grid position above current position (used when landing from fall)
-	# Uses floor() to ensure we snap UP, not down through the object we collided with
-	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
-	var grid_y = floor(global_position.y / TILE_SIZE) * TILE_SIZE
 	global_position = Vector2(grid_x, grid_y)
 
 func merge_bodies(host: StaticBody2D, guest: StaticBody2D, sensor: Area2D):
