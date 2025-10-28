@@ -20,7 +20,6 @@ sprite_frames = ExtResource("2_ks2v0")
 animation = &"unmoveable"
 
 [node name="collisionshape" type="CollisionShape2D" parent="."]
-scale = Vector2(0.999, 0.999)
 shape = SubResource("RectangleShape2D_telwu")
 
 [node name="sensor_right" type="Area2D" parent="."]
