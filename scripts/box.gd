@@ -5,7 +5,7 @@ const MAX_FALL_SPEED = 400.0  # Maximum falling speed
 const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
 const REST_TIME_REQUIRED = 0.05  # Time required to be considered resting (shorter for faster merges)
 const TILE_SIZE := 18
-const FALL_CHECK_DISTANCE := 10.0  # How far below to check for support (larger for more reliable detection)
+const FALL_CHECK_DISTANCE := 12.0  # Check just past half a tile below for support
 
 var rest_timer := 0.0
 @export var is_resting := false
@@ -72,14 +72,13 @@ func _physics_process(delta: float) -> void:
 		var space_state = get_world_2d().direct_space_state
 		var collision_detected = false
 
-		# Test movement for all collision shapes
+		# Test movement for all collision shapes (excluding sensor shapes)
 		for child in get_children():
-			if child is CollisionShape2D:
+			if child is CollisionShape2D and child.get_parent() == self:
 				var query = PhysicsShapeQueryParameters2D.new()
 				query.shape = child.shape
 				query.transform = Transform2D(0, child.global_position + movement)
 				# Detect both ground (layer 1) AND boxes (layer 2) for collision detection
-				# This is separate from the body's collision_mask which only affects physics response
 				query.collision_mask = 3
 				query.exclude = [self]
 
@@ -89,9 +88,11 @@ func _physics_process(delta: float) -> void:
 					break
 
 		if collision_detected:
-			# Don't move at all if would collide - stay at current grid position
+			# Collision detected - snap to grid position one tile UP from current
+			# This ensures we land exactly one tile above what we collided with
 			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
-			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
+			var current_tile_y = floor(global_position.y / TILE_SIZE)
+			var grid_y = current_tile_y * TILE_SIZE
 			global_position = Vector2(grid_x, grid_y)
 			falling_velocity = 0
 			rest_timer = 0.0
@@ -213,7 +214,7 @@ func can_shape_fall() -> bool:
 	var bottom_tiles: Array[CollisionShape2D] = []
 
 	for child in get_children():
-		if child is CollisionShape2D:
+		if child is CollisionShape2D and child.get_parent() == self:
 			var cell = world_to_cell(child.global_position)
 			var below_cell = cell + Vector2i(0, 1)
 
@@ -315,8 +316,11 @@ func build_occupancy() -> Dictionary:
 	var occ := {}
 	for child in get_children():
 		if child is CollisionShape2D:
-			var cell := world_to_cell(child.global_position)
-			occ[cell] = child
+			# Only count collision shapes that are direct children (not sensor children)
+			# Sensor collision shapes are children of Area2D nodes
+			if child.get_parent() == self:
+				var cell := world_to_cell(child.global_position)
+				occ[cell] = child
 	return occ
 
 func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> int:
