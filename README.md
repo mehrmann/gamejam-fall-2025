@@ -1,6 +1,7 @@
-# Godot Driller
+# Blockbuster
 
-A Godot game project with automated web builds and PR previews.
+A Godot game project.
+Started in a gamejam.
 
 ## Development
 
@@ -12,7 +13,7 @@ The project includes automated web builds for every push and pull request.
 
 ### PR Preview Setup
 
-The workflow uses **GitHub Pages** to deploy PR previews - no external services or tokens required!
+The workflow uses **GitHub Pages** to deploy PR previews
 
 **One-time setup:**
 
