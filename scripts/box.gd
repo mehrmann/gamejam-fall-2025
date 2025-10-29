@@ -204,14 +204,20 @@ func can_shape_fall() -> bool:
 	var occ = build_occupancy()
 	var bottom_tiles: Array[CollisionShape2D] = []
 
+	# Get all collision shapes (only direct children, not sensors)
 	for child in get_children():
-		if child is CollisionShape2D and child.get_parent() == self:
-			var cell = world_to_cell(child.global_position)
-			var below_cell = cell + Vector2i(0, 1)
+		# Skip non-collision-shapes and Area2D sensors
+		if not (child is CollisionShape2D):
+			continue
+		if child.get_parent() != self:
+			continue
 
-			# If there's no tile directly below this one in our merged shape, it's a bottom tile
-			if not occ.has(below_cell):
-				bottom_tiles.append(child)
+		var cell = world_to_cell(child.global_position)
+		var below_cell = cell + Vector2i(0, 1)
+
+		# If there's no tile directly below this one in our merged shape, it's a bottom tile
+		if not occ.has(below_cell):
+			bottom_tiles.append(child)
 
 	# If no bottom tiles found, something is wrong - don't fall
 	if bottom_tiles.is_empty():
@@ -226,17 +232,19 @@ func can_shape_fall() -> bool:
 		var below_cell = tile_cell + Vector2i(0, 1)
 		var check_position = Vector2(below_cell.x * TILE_SIZE, below_cell.y * TILE_SIZE)
 
-		# Check if anything is at that grid position
-		var query = PhysicsShapeQueryParameters2D.new()
-		query.shape = tile.shape
-		query.transform = Transform2D(0, check_position)
+		# Use point check instead of shape check - more reliable
+		var query = PhysicsPointQueryParameters2D.new()
+		query.position = check_position
 		query.collision_mask = 3  # Detect both ground (layer 1) and boxes (layer 2)
-		query.exclude = [self]
 
-		var results = space_state.intersect_shape(query, 10)
+		var results = space_state.intersect_point(query, 10)
 
 		for result in results:
 			var other_body = result["collider"]
+
+			# Skip self
+			if other_body == self:
+				continue
 
 			# Check if there's a box or solid ground at the tile immediately below
 			if other_body is StaticBody2D:
