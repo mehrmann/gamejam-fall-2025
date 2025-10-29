@@ -2,7 +2,6 @@ extends StaticBody2D
 
 const TILE_SIZE := 18
 const FALL_DURATION := 0.15  # Time in seconds for box to fall one tile
-const FALL_CHECK_DISTANCE := 12.0  # Check just past half a tile below for support
 const SETTLE_TIME := 0.05  # Time to wait after landing before merging
 
 enum State {
@@ -141,16 +140,19 @@ func find_landing_position() -> Vector2:
 
 func notify_boxes_above() -> void:
 	# When we start falling, notify boxes that might be supported by us
-	# Check above each of our collision shapes for other boxes
+	# Check the tile immediately above each of our collision shapes
 	var space_state = get_world_2d().direct_space_state
 	var notified_boxes := {}  # Track which boxes we've already notified to avoid duplicates
 
 	for child in get_children():
-		if child is CollisionShape2D:
+		if child is CollisionShape2D and child.get_parent() == self:
+			var tile_cell = world_to_cell(child.global_position)
+			var above_cell = tile_cell + Vector2i(0, -1)
+			var check_position = Vector2(above_cell.x * TILE_SIZE, above_cell.y * TILE_SIZE)
+
 			var query = PhysicsShapeQueryParameters2D.new()
 			query.shape = child.shape
-			# Check slightly above this tile
-			query.transform = Transform2D(0, child.global_position + Vector2(0, -FALL_CHECK_DISTANCE))
+			query.transform = Transform2D(0, check_position)
 			query.collision_mask = 2  # Only detect boxes (layer 2) above us
 			query.exclude = [self]
 
@@ -158,7 +160,7 @@ func notify_boxes_above() -> void:
 
 			for result in results:
 				var other_body = result["collider"]
-				# If it's another box that's resting, tell it to re-check
+				# If it's another box, tell it to re-check
 				# Only notify each box once to avoid redundant checks
 				if other_body is StaticBody2D and other_body.has_method("force_fall_check"):
 					if not notified_boxes.has(other_body):
