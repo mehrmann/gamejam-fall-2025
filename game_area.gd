@@ -30,6 +30,12 @@ func spawn_boxes(rows):
 			)
 			# if boxes is a child/sibling under same parent, setting position is enough
 			new_box.global_position = $bottom.global_position + local_pos
+
+			# Make bottom row (y=0) unmoveable so it acts as ground
+			if y == 0:
+				new_box.color = new_box.colors.unmoveable
+				new_box.get_node("sprite").animation = "unmoveable"
+
 			boxes.add_child(new_box)	
 
 

@@ -88,16 +88,14 @@ func _physics_process(delta: float) -> void:
 					break
 
 		if collision_detected:
-			# Collision detected - snap to grid position one tile UP from current
-			# This ensures we land exactly one tile above what we collided with
+			# Would collide - snap to nearest grid position
 			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
-			var current_tile_y = floor(global_position.y / TILE_SIZE)
-			var grid_y = current_tile_y * TILE_SIZE
+			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
 			global_position = Vector2(grid_x, grid_y)
 			falling_velocity = 0
 			rest_timer = 0.0
 		else:
-			# Move the box
+			# Safe to move
 			global_position += movement
 			rest_timer = 0.0
 	else:
