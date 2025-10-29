@@ -19,7 +19,7 @@ func _process(delta: float) -> void:
 func _on_reload_area_body_entered(body: Node2D) -> void:
 	$bottom.global_transform=$bottom.global_transform.translated(Vector2(0,18))
 	spawn_boxes(1)
-	
+
 func spawn_boxes(rows):
 	for y in range(rows):
 		for x in range(cols):
@@ -33,10 +33,10 @@ func spawn_boxes(rows):
 
 			# Make bottom row (y=0) unmoveable so it acts as ground
 			if y == 0:
+				new_box.skip_randomize = true
 				new_box.color = new_box.colors.unmoveable
-				new_box.get_node("sprite").animation = "unmoveable"
 
-			boxes.add_child(new_box)	
+			boxes.add_child(new_box)
 
 
 func _on_kill_zone_body_entered(body: Node2D) -> void:

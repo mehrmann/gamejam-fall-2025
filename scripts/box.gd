@@ -35,6 +35,7 @@ enum colors {
 	unmoveable
 }
 @export var color := colors.red
+@export var skip_randomize := false  # Set to true to keep manually set color
 
 @onready var sensors : Array[Area2D] = [$sensor_right, $sensor_bottom]
 var merge_candidates_map = {}
@@ -42,7 +43,8 @@ var merge_candidates_map = {}
 var health = 1
 
 func _ready() -> void:
-	randomize_color()
+	if not skip_randomize:
+		randomize_color()
 	$sprite.animation = colors.keys()[color]
 
 	# Snap to grid on spawn to ensure proper alignment
@@ -77,7 +79,11 @@ func _process_idle(delta: float) -> void:
 			for sensor in sensors:
 				if sensor != null and sensor.has_overlapping_bodies():
 					for overlapping in sensor.get_overlapping_bodies():
+						print("Box at ", global_position, " sensor detected overlap with ", overlapping.global_position,
+							  " | self.is_resting=", is_resting, " other.is_resting=", overlapping.is_resting,
+							  " | self.color=", color, " other.color=", overlapping.color)
 						if overlapping.is_resting and overlapping.color == self.color:
+							print("  -> MERGING!")
 							merge_bodies(self, overlapping, sensor)
 
 func _process_falling(delta: float) -> void:
@@ -198,15 +204,13 @@ func force_fall_check() -> void:
 
 func can_shape_fall() -> bool:
 	# Determines if this merged shape can fall by checking all bottom tiles
-	# For grid-based system: check if the tile IMMEDIATELY below each bottom tile is free
+	# Use direct position checks instead of physics queries for reliability
 
-	# Find all bottom tiles (tiles that don't have another tile directly below them)
+	# Find all bottom tiles
 	var occ = build_occupancy()
 	var bottom_tiles: Array[CollisionShape2D] = []
 
-	# Get all collision shapes (only direct children, not sensors)
 	for child in get_children():
-		# Skip non-collision-shapes and Area2D sensors
 		if not (child is CollisionShape2D):
 			continue
 		if child.get_parent() != self:
@@ -219,58 +223,46 @@ func can_shape_fall() -> bool:
 		if not occ.has(below_cell):
 			bottom_tiles.append(child)
 
-	# If no bottom tiles found, something is wrong - don't fall
+	# If no bottom tiles found, don't fall
 	if bottom_tiles.is_empty():
+		print("Box at ", global_position, " has no bottom tiles, won't fall")
 		return false
 
 	# Check if ALL bottom tiles have the immediate tile below them free
-	var space_state = get_world_2d().direct_space_state
+	# Use get_tree() to check all boxes directly instead of physics queries
+	var all_boxes = get_tree().get_nodes_in_group("block")
 
 	for tile in bottom_tiles:
-		# Check the tile IMMEDIATELY below (one grid cell down)
 		var tile_cell = world_to_cell(tile.global_position)
 		var below_cell = tile_cell + Vector2i(0, 1)
-		var check_position = Vector2(below_cell.x * TILE_SIZE, below_cell.y * TILE_SIZE)
 
-		# Use point check instead of shape check - more reliable
-		var query = PhysicsPointQueryParameters2D.new()
-		query.position = check_position
-		query.collision_mask = 3  # Detect both ground (layer 1) and boxes (layer 2)
-
-		var results = space_state.intersect_point(query, 10)
-
-		for result in results:
-			var other_body = result["collider"]
-
-			# Skip self
-			if other_body == self:
+		# Check all other boxes to see if any occupy the cell below
+		for other_box in all_boxes:
+			if other_box == self:
+				continue
+			if other_box.is_queued_for_deletion():
 				continue
 
-			# Check if there's a box or solid ground at the tile immediately below
-			if other_body is StaticBody2D:
-				# Check if it's another box
-				if other_body.has_method("get") and other_body.get("falling_velocity") != null:
-					# Skip boxes that are queued for deletion (just got mined)
-					if other_body.is_queued_for_deletion():
-						continue
+			# For merged boxes, check all their collision shapes
+			var other_occ = other_box.build_occupancy() if other_box.has_method("build_occupancy") else {}
 
-					# It's a box - only consider it support if it's truly stable
-					# Check state to see if it's idle (not falling or settling)
-					var other_state = other_body.get("state")
-
-					# A box is stable support only if it's in IDLE state
+			if other_occ.has(below_cell):
+				# This box has a tile at the position below us
+				# Only consider it support if it's stable (IDLE state)
+				if other_box.has_method("get"):
+					var other_state = other_box.get("state")
 					if other_state == State.IDLE:
-						# Box immediately below is stable, we have support
-						return false
-					# Otherwise, box below is falling or unstable, continue checking other tiles
+						print("Box at ", global_position, " (color ", color, ") blocked by IDLE box at cell ", below_cell)
+						return false  # Has stable support
+					else:
+						print("Box at ", global_position, " found FALLING/SETTLING box at ", below_cell, ", ignoring")
 				else:
-					# It's solid ground (not a box), we have support
+					# Not a box (shouldn't happen with "block" group)
+					print("Box at ", global_position, " blocked by non-box at cell ", below_cell)
 					return false
-			elif other_body is TileMap or other_body is CharacterBody2D:
-				# Ground or player at the position immediately below
-				return false
 
-	# All bottom tiles have the immediate tile below free, we can fall
+	# All bottom tiles are free below
+	print("Box at ", global_position, " (color ", color, ") CAN FALL")
 	return true
 
 func snap_to_grid_position() -> void:
