@@ -65,38 +65,42 @@ func _physics_process(delta: float) -> void:
 		falling_velocity += GRAVITY * delta
 		falling_velocity = min(falling_velocity, MAX_FALL_SPEED)
 
-		# Calculate movement for this frame
-		var movement = Vector2(0, falling_velocity * delta)
+		# Calculate movement for this frame - limit to half tile for safety
+		var movement_amount = min(falling_velocity * delta, TILE_SIZE / 2.0)
+		var movement = Vector2(0, movement_amount)
+		var old_position = global_position
 
-		# Check for collision using physics query
+		# Move first
+		global_position += movement
+
+		# Now check if we're overlapping anything
 		var space_state = get_world_2d().direct_space_state
-		var collision_detected = false
+		var is_overlapping = false
 
-		# Test movement for all collision shapes (excluding sensor shapes)
+		# Test all collision shapes for overlap (excluding sensor shapes)
 		for child in get_children():
 			if child is CollisionShape2D and child.get_parent() == self:
 				var query = PhysicsShapeQueryParameters2D.new()
 				query.shape = child.shape
-				query.transform = Transform2D(0, child.global_position + movement)
-				# Detect both ground (layer 1) AND boxes (layer 2) for collision detection
+				query.transform = Transform2D(0, child.global_position)
 				query.collision_mask = 3
 				query.exclude = [self]
 
 				var result = space_state.intersect_shape(query, 1)
 				if result.size() > 0:
-					collision_detected = true
+					is_overlapping = true
 					break
 
-		if collision_detected:
-			# Would collide - snap to nearest grid position
+		if is_overlapping:
+			# We moved into something - back up to previous grid position
+			global_position = old_position
 			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
 			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
 			global_position = Vector2(grid_x, grid_y)
 			falling_velocity = 0
 			rest_timer = 0.0
 		else:
-			# Safe to move
-			global_position += movement
+			# Movement was safe
 			rest_timer = 0.0
 	else:
 		# Not falling, increase rest timer
