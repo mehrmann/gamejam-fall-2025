@@ -196,38 +196,7 @@ func force_fall_check() -> void:
 
 func can_shape_fall() -> bool:
 	# Determines if this merged shape can fall by checking all bottom tiles
-	#
-	# For merged shapes (L-shapes, T-shapes, etc.), the shape can only fall when
-	# ALL of its bottom tiles are unsupported. A tile is considered supported if:
-	# 1. There's solid ground below it
-	# 2. There's a RESTING box below it (not falling or unstable)
-	#
-	# Cascading behavior:
-	# When support is removed from a tower of boxes, they start falling immediately.
-	# This is handled via the notify_boxes_above() system:
-	#
-	# Example: Tower of 3 boxes loses bottom support
-	# 1. Bottom box detects no support, starts falling
-	# 2. Bottom box calls notify_boxes_above()
-	# 3. Middle box receives force_fall_check(), re-evaluates, starts falling
-	# 4. Middle box calls notify_boxes_above()
-	# 5. Top box receives force_fall_check(), re-evaluates, starts falling
-	#
-	# This entire cascade happens in a single frame via recursive notification,
-	# so all boxes in a tower start falling simultaneously when support is removed.
-	#
-	# Infinite recursion protection:
-	# Even with complex interlocking shapes (C-shapes, circular dependencies, etc.),
-	# infinite recursion is prevented by:
-	# 1. is_resting check - once a box starts falling, it won't process again
-	# 2. being_notified flag - prevents re-entry during cascade propagation
-	# 3. notified_boxes dict - each box is only notified once per cascade
-	#
-	# Example with circular dependency:
-	# Box A (supports Box B) loses support → A.is_resting=false, being_notified=true
-	# → notifies Box B → B checks, starts falling → B.is_resting=false
-	# → B tries to notify A → A.force_fall_check() sees being_notified=true → returns
-	# Result: Safe, no infinite recursion
+	# For grid-based system: check if the tile IMMEDIATELY below each bottom tile is free
 
 	# Find all bottom tiles (tiles that don't have another tile directly below them)
 	var occ = build_occupancy()
@@ -246,14 +215,19 @@ func can_shape_fall() -> bool:
 	if bottom_tiles.is_empty():
 		return false
 
-	# Check if ALL bottom tiles have no support below them
+	# Check if ALL bottom tiles have the immediate tile below them free
 	var space_state = get_world_2d().direct_space_state
 
 	for tile in bottom_tiles:
-		# Check for solid ground or other boxes below this tile
+		# Check the tile IMMEDIATELY below (one grid cell down)
+		var tile_cell = world_to_cell(tile.global_position)
+		var below_cell = tile_cell + Vector2i(0, 1)
+		var check_position = Vector2(below_cell.x * TILE_SIZE, below_cell.y * TILE_SIZE)
+
+		# Check if anything is at that grid position
 		var query = PhysicsShapeQueryParameters2D.new()
 		query.shape = tile.shape
-		query.transform = Transform2D(0, tile.global_position + Vector2(0, FALL_CHECK_DISTANCE))
+		query.transform = Transform2D(0, check_position)
 		query.collision_mask = 3  # Detect both ground (layer 1) and boxes (layer 2)
 		query.exclude = [self]
 
@@ -262,9 +236,9 @@ func can_shape_fall() -> bool:
 		for result in results:
 			var other_body = result["collider"]
 
-			# Check if there's a box or solid ground below
+			# Check if there's a box or solid ground at the tile immediately below
 			if other_body is StaticBody2D:
-				# Check if it's another box that's also falling
+				# Check if it's another box
 				if other_body.has_method("get") and other_body.get("falling_velocity") != null:
 					# Skip boxes that are queued for deletion (just got mined)
 					if other_body.is_queued_for_deletion():
@@ -276,17 +250,17 @@ func can_shape_fall() -> bool:
 
 					# A box is stable support only if it's in IDLE state
 					if other_state == State.IDLE:
-						# Box below is stable, we have support
+						# Box immediately below is stable, we have support
 						return false
 					# Otherwise, box below is falling or unstable, continue checking other tiles
 				else:
 					# It's solid ground (not a box), we have support
 					return false
 			elif other_body is TileMap or other_body is CharacterBody2D:
-				# Ground or player provides support
+				# Ground or player at the position immediately below
 				return false
 
-	# All bottom tiles are unsupported, we can fall
+	# All bottom tiles have the immediate tile below free, we can fall
 	return true
 
 func snap_to_grid_position() -> void:
