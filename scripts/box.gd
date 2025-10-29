@@ -1,21 +1,30 @@
 extends StaticBody2D
 
-const GRAVITY = 500.0  # Pixels per second squared
-const MAX_FALL_SPEED = 400.0  # Maximum falling speed
-const STOP_SPEED_THRESHOLD = 5.0  # Speed threshold to consider stopped
-const REST_TIME_REQUIRED = 0.05  # Time required to be considered resting (shorter for faster merges)
 const TILE_SIZE := 18
+const FALL_DURATION := 0.15  # Time in seconds for box to fall one tile
 const FALL_CHECK_DISTANCE := 12.0  # Check just past half a tile below for support
+const SETTLE_TIME := 0.05  # Time to wait after landing before merging
 
-var rest_timer := 0.0
-@export var is_resting := false
-var falling_velocity := 0.0  # Custom velocity for fake physics
-var last_position := Vector2.ZERO
+enum State {
+	IDLE,        # Box is stable and not moving
+	FALLING,     # Box is currently falling to next position
+	SETTLING     # Box just landed, waiting to settle before merging
+}
+
+var state := State.IDLE
+var target_position := Vector2.ZERO
+var fall_progress := 0.0
+var settle_timer := 0.0
 var can_fall := true  # Whether this merged shape can fall
 var being_notified := false  # Recursion guard for cascade notifications
 
 # Signal emitted when this box starts falling (loses support)
 signal started_falling
+
+# For backwards compatibility (used by character.gd)
+var falling_velocity := 0.0  # Non-zero when falling
+var is_resting: bool:
+	get: return state == State.IDLE
 enum colors {
 	red,
 	yellow,
@@ -39,89 +48,96 @@ func _ready() -> void:
 
 	# Snap to grid on spawn to ensure proper alignment
 	snap_to_grid_position()
-	last_position = global_position
+	state = State.IDLE
 
 func _physics_process(delta: float) -> void:
-	# Update resting state first so other boxes can check it reliably
-	# This must happen before can_shape_fall() is called by other boxes
-	is_resting = rest_timer >= REST_TIME_REQUIRED
+	match state:
+		State.IDLE:
+			_process_idle(delta)
+		State.FALLING:
+			_process_falling(delta)
+		State.SETTLING:
+			_process_settling(delta)
 
-	# Check if this merged shape can fall by checking all bottom tiles
-	# This needs to be checked every frame as conditions can change
-	var previous_can_fall = can_fall
+func _process_idle(delta: float) -> void:
+	# Check if we should start falling
 	can_fall = can_shape_fall()
 
-	# If we just started falling, reset velocity accumulation and notify other boxes
-	if can_fall and not previous_can_fall:
+	if can_fall:
+		# Calculate where we'll fall to (next grid position below)
+		target_position = find_landing_position()
+		if target_position != global_position:
+			state = State.FALLING
+			fall_progress = 0.0
+			falling_velocity = TILE_SIZE / FALL_DURATION  # For character collision detection
+			started_falling.emit()
+			notify_boxes_above()
+	else:
+		# Not falling - check for merging
+		if color < colors.unbreakable:
+			for sensor in sensors:
+				if sensor != null and sensor.has_overlapping_bodies():
+					for overlapping in sensor.get_overlapping_bodies():
+						if overlapping.is_resting and overlapping.color == self.color:
+							merge_bodies(self, overlapping, sensor)
+
+func _process_falling(delta: float) -> void:
+	# Interpolate towards target position
+	fall_progress += delta / FALL_DURATION
+
+	if fall_progress >= 1.0:
+		# Reached target
+		global_position = target_position
+		state = State.SETTLING
+		settle_timer = 0.0
 		falling_velocity = 0.0
-		rest_timer = 0.0
-		is_resting = false  # Immediately mark as not resting
-		started_falling.emit()
-		# Trigger re-evaluation for all other resting boxes in case they were supported by us
-		notify_boxes_above()
+	else:
+		# Smooth interpolation
+		var start_pos = target_position - Vector2(0, TILE_SIZE)
+		global_position = start_pos.lerp(target_position, fall_progress)
 
-	# Apply custom fake physics (gravity)
-	if not is_resting and can_fall:
-		falling_velocity += GRAVITY * delta
-		falling_velocity = min(falling_velocity, MAX_FALL_SPEED)
+func _process_settling(delta: float) -> void:
+	# Wait a moment before checking if we need to fall further or merge
+	settle_timer += delta
 
-		# Calculate movement for this frame - limit to half tile for safety
-		var movement_amount = min(falling_velocity * delta, TILE_SIZE / 2.0)
-		var movement = Vector2(0, movement_amount)
-		var old_position = global_position
+	if settle_timer >= SETTLE_TIME:
+		state = State.IDLE
 
-		# Move first
-		global_position += movement
+func find_landing_position() -> Vector2:
+	# Find the next grid position below where we would land
+	# Start from current position and check one tile down at a time
+	var current_grid_y = round(global_position.y / TILE_SIZE)
+	var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
 
-		# Now check if we're overlapping anything
-		var space_state = get_world_2d().direct_space_state
-		var is_overlapping = false
+	# Check each tile below until we find a collision
+	var space_state = get_world_2d().direct_space_state
 
-		# Test all collision shapes for overlap (excluding sensor shapes)
+	for tiles_below in range(1, 100):  # Max 100 tiles down
+		var check_y = (current_grid_y + tiles_below) * TILE_SIZE
+		var test_position = Vector2(grid_x, check_y)
+
+		# Would we collide at this position?
+		var would_collide = false
 		for child in get_children():
 			if child is CollisionShape2D and child.get_parent() == self:
+				var offset = child.global_position - global_position
 				var query = PhysicsShapeQueryParameters2D.new()
 				query.shape = child.shape
-				query.transform = Transform2D(0, child.global_position)
+				query.transform = Transform2D(0, test_position + offset)
 				query.collision_mask = 3
 				query.exclude = [self]
 
 				var result = space_state.intersect_shape(query, 1)
 				if result.size() > 0:
-					is_overlapping = true
+					would_collide = true
 					break
 
-		if is_overlapping:
-			# We moved into something - back up to previous grid position
-			global_position = old_position
-			var grid_x = round(global_position.x / TILE_SIZE) * TILE_SIZE
-			var grid_y = round(global_position.y / TILE_SIZE) * TILE_SIZE
-			global_position = Vector2(grid_x, grid_y)
-			falling_velocity = 0
-			rest_timer = 0.0
-		else:
-			# Movement was safe
-			rest_timer = 0.0
-	else:
-		# Not falling, increase rest timer
-		if falling_velocity < STOP_SPEED_THRESHOLD:
-			rest_timer += delta
-		else:
-			rest_timer = 0.0
+		if would_collide:
+			# Can't go to this position - land one tile above
+			return Vector2(grid_x, (current_grid_y + tiles_below - 1) * TILE_SIZE)
 
-		if rest_timer >= REST_TIME_REQUIRED:
-			falling_velocity = 0
-
-	is_resting = rest_timer >= REST_TIME_REQUIRED
-	last_position = global_position
-
-	# Handle merging
-	if is_resting and color < colors.unbreakable:
-		for sensor in sensors:
-			if sensor != null and sensor.has_overlapping_bodies():
-				for overlapping in sensor.get_overlapping_bodies():
-					if overlapping.is_resting and overlapping.color == self.color:
-						merge_bodies(self, overlapping, sensor)
+	# Shouldn't reach here, but return current position if no collision found
+	return global_position
 
 func notify_boxes_above() -> void:
 	# When we start falling, notify boxes that might be supported by us
@@ -154,10 +170,10 @@ func force_fall_check() -> void:
 	# Force immediate re-evaluation of our fall state
 	#
 	# Multiple guards against infinite recursion:
-	# 1. Only process if currently resting (not already falling)
+	# 1. Only process if currently idle (not already falling)
 	# 2. being_notified flag prevents re-entry during cascade
 
-	if not is_resting or being_notified:
+	if state != State.IDLE or being_notified:
 		return
 
 	# Set guard before any recursive calls
@@ -166,12 +182,14 @@ func force_fall_check() -> void:
 	can_fall = can_shape_fall()
 	if can_fall:
 		# We should also start falling!
-		falling_velocity = 0.0
-		rest_timer = 0.0
-		is_resting = false
-		started_falling.emit()
-		# Recursively notify boxes above us
-		notify_boxes_above()
+		target_position = find_landing_position()
+		if target_position != global_position:
+			state = State.FALLING
+			fall_progress = 0.0
+			falling_velocity = TILE_SIZE / FALL_DURATION
+			started_falling.emit()
+			# Recursively notify boxes above us
+			notify_boxes_above()
 
 	# Clear guard after cascade completes
 	being_notified = false
@@ -253,15 +271,12 @@ func can_shape_fall() -> bool:
 						continue
 
 					# It's a box - only consider it support if it's truly stable
-					# Check multiple stability indicators to avoid evaluation order issues
-					var other_falling_velocity = other_body.get("falling_velocity")
-					var other_is_resting = other_body.get("is_resting")
+					# Check state to see if it's idle (not falling or settling)
+					var other_state = other_body.get("state")
 
-					# A box is stable support if:
-					# 1. It has very low/no falling velocity, AND
-					# 2. It's in a resting state (has been stable for REST_TIME_REQUIRED)
-					if abs(other_falling_velocity) < STOP_SPEED_THRESHOLD and other_is_resting:
-						# Box below is truly stable, we have support
+					# A box is stable support only if it's in IDLE state
+					if other_state == State.IDLE:
+						# Box below is stable, we have support
 						return false
 					# Otherwise, box below is falling or unstable, continue checking other tiles
 				else:
