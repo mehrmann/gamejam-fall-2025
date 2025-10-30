@@ -1,11 +1,8 @@
-extends RigidBody2D
+extends StaticBody2D
 
-const STOP_SPEED_THRESHOLD = 2.0
-const REST_TIME_REQUIRED = .25
-const TILE_SIZE := 18  
+const TILE_SIZE := 18
+const FALL_DURATION := 0.15  # Time to tween from one grid cell to next
 
-var rest_timer := 0.0
-@export var is_resting := false
 enum colors {
 	red,
 	yellow,
@@ -16,71 +13,107 @@ enum colors {
 	unbreakable,
 	unmoveable
 }
+
 @export var color := colors.red
+@export var is_falling := false
+@export var is_static := false  # For unmoveable blocks at the bottom
 
 @onready var sensors : Array[Area2D] = [$sensor_right, $sensor_bottom]
-var merge_candidates_map = {}
-
 var health = 1
+var grid_position := Vector2i.ZERO  # Current grid position
+var is_tweening := false
 
 func _ready() -> void:
 	randomize_color()
 	$sprite.animation = colors.keys()[color]
+	# Calculate initial grid position
+	grid_position = world_to_cell(global_position)
 
-func _physics_process(delta: float) -> void:
-	if linear_velocity.length() < STOP_SPEED_THRESHOLD:
-		rest_timer += delta
-	else:
-		rest_timer = 0.0
-	
-	is_resting = rest_timer >= REST_TIME_REQUIRED
-	
-	if is_resting and color == colors.unmoveable:
-		freeze = true
-		can_sleep = true
-	
-	if is_resting and color < colors.unbreakable:
-		for sensor in sensors:
-			if sensor != null and sensor.has_overlapping_bodies():
-				for overlapping in sensor.get_overlapping_bodies():
-					if overlapping.is_resting and overlapping.color == self.color:
-						merge_bodies(self, overlapping, sensor)
+	# Static blocks don't fall
+	if color == colors.unmoveable:
+		is_static = true
 
-func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
+func set_grid_position(pos: Vector2i) -> void:
+	grid_position = pos
+	global_position = cell_to_world(pos)
+
+func cell_to_world(cell: Vector2i) -> Vector2:
+	# Convert grid cell to world position
+	return Vector2(cell.x * TILE_SIZE, cell.y * TILE_SIZE)
+
+func world_to_cell(p: Vector2) -> Vector2i:
+	return Vector2i(
+		roundi(p.x / TILE_SIZE),
+		roundi(p.y / TILE_SIZE)
+	)
+
+func fall_one_cell() -> void:
+	if is_tweening or is_static:
+		return
+
+	is_tweening = true
+	is_falling = true
+
+	var target_grid_pos = grid_position + Vector2i(0, 1)
+	var target_world_pos = cell_to_world(target_grid_pos)
+
+	# Create tween for smooth movement
+	var tween = create_tween()
+	tween.tween_property(self, "global_position", target_world_pos, FALL_DURATION)
+	tween.finished.connect(_on_fall_complete.bind(target_grid_pos))
+
+func _on_fall_complete(new_grid_pos: Vector2i) -> void:
+	grid_position = new_grid_pos
+	is_tweening = false
+	is_falling = false
+	# Trigger merge check when we stop falling
+	check_for_merge()
+
+func check_for_merge() -> void:
+	if is_static or color >= colors.unbreakable:
+		return
+
+	for sensor in sensors:
+		if sensor != null and sensor.has_overlapping_bodies():
+			for overlapping in sensor.get_overlapping_bodies():
+				if overlapping.has_method("can_merge_with") and overlapping.can_merge_with(self):
+					merge_bodies(self, overlapping, sensor)
+					return
+
+func can_merge_with(other) -> bool:
+	if not other or other == self:
+		return false
+	if is_tweening or is_falling or is_static:
+		return false
+	if other.has("is_tweening") and (other.is_tweening or other.is_falling):
+		return false
+	if other.has("color") and other.color == self.color and color < colors.unbreakable:
+		return true
+	return false
+
+func merge_bodies(host: StaticBody2D, guest: StaticBody2D, sensor: Area2D):
 	if host == guest or host.is_queued_for_deletion() or guest.is_queued_for_deletion():
 		return
 
-	host.mass += guest.mass
-
-	host.linear_velocity = Vector2.ZERO
-	#host.angular_velocity = 0.0
-
+	# Transfer all children from guest to host
 	for child in guest.get_children():
 		var oldName = child.name
 		child.reparent(host, true)
 		child.name = guest.name + "_" + oldName
 		if child is Area2D:
 			sensors.append(child)
-			#child.body_entered.connect(on_sensor_body_entered.bind(child))
-			#child.body_exited.connect(on_sensor_body_exited.bind(child))
-		
-	#print_tree_pretty()
+
+	# Remove the sensor that detected the overlap
 	sensors.erase(sensor)
 	sensor.queue_free()
 	guest.queue_free()
-	
+
+	# Update sprite frames based on neighbors
 	var occ = build_occupancy()
 	for collisionShape in get_children().filter(func(node: Node2D): return node is CollisionShape2D):
 		var neighbor_mask = get_neighbors_for(collisionShape, occ)
-		#print(collisionShape.name + "=" + str(neighbor_mask))
 		(get_node(collisionShape.name.replace("collisionshape", "sprite")) as AnimatedSprite2D).frame = neighbor_mask
 
-func world_to_cell(p: Vector2) -> Vector2i:
-	return Vector2i(
-		floor(p.x / TILE_SIZE),
-		floor(p.y / TILE_SIZE)
-	)
-	
 func build_occupancy() -> Dictionary:
 	var occ := {}
 	for child in get_children():
@@ -91,19 +124,19 @@ func build_occupancy() -> Dictionary:
 
 func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> int:
 	var cell := world_to_cell(child.global_position)
-	
+
 	const DIRS := {
 		Vector2i(-1, 0): 1,  # left  -> bit 0
 		Vector2i(1, 0): 2,   # right -> bit 1
 		Vector2i(0, -1): 4,  # up    -> bit 2
 		Vector2i(0, 1): 8    # down  -> bit 3
 	}
-	
+
 	var mask := 0
 	for dir in DIRS:
 		if occ.has(cell + dir):
 			mask |= DIRS[dir]
-			
+
 	return mask
 
 func randomize_color():
@@ -130,6 +163,16 @@ func randomize_color():
 			color = colors.unbreakable
 		else:
 			color = colors.unmoveable
+			is_static = true
+
+func get_all_grid_positions() -> Array[Vector2i]:
+	# Returns all grid positions occupied by this block (including merged blocks)
+	var positions: Array[Vector2i] = []
+	for child in get_children():
+		if child is CollisionShape2D:
+			var cell := world_to_cell(child.global_position)
+			positions.append(cell)
+	return positions
 
 func snap_to_grid(world_pos: Vector2, grid_origin: Vector2, cell_size: float) -> Vector2:
 	var local_pos = world_pos - grid_origin
