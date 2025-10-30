@@ -1,9 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://c76kgq06r328i"]
+[gd_scene load_steps=6 format=3 uid="uid://c76kgq06r328i"]
 
 [ext_resource type="Script" uid="uid://db37ebnkkfbx7" path="res://game_area.gd" id="1_4eb3c"]
-
-[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_gdmpp"]
-normal = Vector2(1, 4.371139e-08)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_4eb3c"]
 size = Vector2(99, 263)
@@ -24,9 +21,7 @@ script = ExtResource("1_4eb3c")
 metadata/_edit_horizontal_guides_ = [-90.0, -180.0, -360.0]
 metadata/_edit_vertical_guides_ = [-98.0]
 
-[node name="bottom" type="CollisionShape2D" parent="."]
-rotation = -1.5707964
-shape = SubResource("WorldBoundaryShape2D_gdmpp")
+[node name="bottom" type="Node2D" parent="."]
 
 [node name="kill_zone" type="Area2D" parent="bottom"]
 position = Vector2(407, 1.7762184e-05)
