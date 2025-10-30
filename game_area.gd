@@ -18,6 +18,8 @@ func _process(delta: float) -> void:
 
 func _on_reload_area_body_entered(body: Node2D) -> void:
 	$bottom.global_transform=$bottom.global_transform.translated(Vector2(0,18))
+	# Snap to grid to prevent floating point drift
+	$bottom.global_position.y = round($bottom.global_position.y / cell_size) * cell_size
 	spawn_boxes(1)
 	
 func spawn_boxes(rows):

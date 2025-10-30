@@ -59,6 +59,12 @@ func merge_bodies(host: RigidBody2D, guest: RigidBody2D, sensor: Area2D):
 		var oldName = child.name
 		child.reparent(host, true)
 		child.name = guest.name + "_" + oldName
+
+		# Snap child position to grid (position is now relative to host)
+		var snapped_x = round(child.position.x / TILE_SIZE) * TILE_SIZE
+		var snapped_y = round(child.position.y / TILE_SIZE) * TILE_SIZE
+		child.position = Vector2(snapped_x, snapped_y)
+
 		if child is Area2D:
 			sensors.append(child)
 			#child.body_entered.connect(on_sensor_body_entered.bind(child))
