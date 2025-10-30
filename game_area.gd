@@ -12,10 +12,11 @@ var occupied_cells := {}  # Track which grid cells are occupied
 var bottom_row_y := 0  # The current bottom row
 
 func _ready() -> void:
-	# Spawn initial static bottom row
-	spawn_static_bottom_row()
-	# Spawn initial rows above
-	spawn_boxes(rows)
+	# Spawn initial rows
+	spawn_boxes(rows + 1)  # Spawn one extra row for the bottom
+	# Convert bottom row to static
+	await get_tree().process_frame  # Wait for blocks to initialize
+	convert_bottom_row_to_static()
 
 func _process(delta: float) -> void:
 	# Gravity simulation
@@ -23,6 +24,7 @@ func _process(delta: float) -> void:
 	if gravity_timer >= gravity_tick_interval:
 		gravity_timer = 0.0
 		apply_gravity()
+		check_merges()
 
 func apply_gravity() -> void:
 	# Update occupied cells map
@@ -65,32 +67,42 @@ func update_occupied_cells() -> void:
 			for pos in positions:
 				occupied_cells[pos] = block
 
-func spawn_static_bottom_row() -> void:
-	# Spawn a row of static unmoveable blocks at the bottom
-	for x in range(cols):
-		var new_box := box.instantiate()
+func check_merges() -> void:
+	# Check all blocks for possible merges
+	var blocks = boxes.get_children()
+	for block in blocks:
+		if block and not block.is_queued_for_deletion() and block.has_method("check_for_merge"):
+			# Only check blocks that are at rest (not falling or tweening)
+			if not block.is_tweening and not block.is_falling:
+				block.check_for_merge()
 
-		var local_pos := Vector2(
-			x * cell_size,
-			bottom_row_y * cell_size
-		)
-		new_box.global_position = $bottom.global_position + local_pos
+func convert_bottom_row_to_static() -> void:
+	# Find all blocks at the current bottom row and make them static
+	var bottom_y_world = $bottom.global_position.y
+	var blocks = boxes.get_children()
 
-		boxes.add_child(new_box)
-
-		# Override properties after _ready is called
-		new_box.color = 7  # colors.unmoveable
-		new_box.is_static = true
-		new_box.health = 8
-		new_box.get_node("sprite").animation = "unmoveable"
+	for block in blocks:
+		if block and not block.is_queued_for_deletion():
+			# Check if block is at the bottom row
+			var positions = block.get_all_grid_positions()
+			for pos in positions:
+				var world_pos = block.cell_to_world(pos)
+				if abs(world_pos.y - bottom_y_world) < cell_size / 2:
+					# This block is at the bottom row
+					block.is_static = true
+					block.color = 7  # colors.unmoveable
+					block.health = 8
+					if block.has_node("sprite"):
+						block.get_node("sprite").animation = "unmoveable"
+					break
 
 func _on_reload_area_body_entered(body: Node2D) -> void:
-	# Move bottom reference down and spawn new row
+	# Move bottom reference down
 	$bottom.global_transform = $bottom.global_transform.translated(Vector2(0, cell_size))
 	bottom_row_y += 1
 
-	# Spawn new static bottom row
-	spawn_static_bottom_row()
+	# Convert the new bottom row to static
+	convert_bottom_row_to_static()
 
 	# Spawn new regular row at top
 	spawn_boxes(1)

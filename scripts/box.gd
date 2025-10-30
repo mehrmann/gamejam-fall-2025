@@ -26,8 +26,9 @@ var is_tweening := false
 func _ready() -> void:
 	randomize_color()
 	$sprite.animation = colors.keys()[color]
-	# Calculate initial grid position
+	# Calculate initial grid position and snap to grid
 	grid_position = world_to_cell(global_position)
+	global_position = cell_to_world(grid_position)  # Snap to grid
 
 	# Static blocks don't fall
 	if color == colors.unmoveable:
