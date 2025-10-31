@@ -1,7 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://b8742761vane7"]
+[gd_scene load_steps=13 format=3 uid="uid://b8742761vane7"]
 
 [ext_resource type="Script" uid="uid://ynjjrbhrvwng" path="res://scripts/character.gd" id="1_rkhd4"]
 [ext_resource type="Texture2D" uid="uid://bk2jfj2k2kp7p" path="res://assets/Hero_006.png" id="2_lrhn5"]
+[ext_resource type="AudioStream" uid="uid://b4bmb8dje50mf" path="res://assets/sounds/threeTone1.ogg" id="3_lrhn5"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_my7n2"]
 atlas = ExtResource("2_lrhn5")
@@ -106,6 +107,10 @@ shape = SubResource("CircleShape2D_rkhd4")
 
 [node name="game_over_timer" type="Timer" parent="."]
 one_shot = true
+
+[node name="alarm_player" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_lrhn5")
+parameters/looping = true
 
 [connection signal="body_entered" from="head" to="." method="_on_head_body_entered"]
 [connection signal="timeout" from="game_over_timer" to="." method="_on_game_over_timer_timeout"]

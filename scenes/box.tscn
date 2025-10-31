@@ -19,7 +19,7 @@ metadata/_edit_vertical_guides_ = [-9.0, 9.0]
 
 [node name="sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = ExtResource("2_ks2v0")
-animation = &"unmoveable"
+animation = &"food"
 
 [node name="collisionshape" type="CollisionShape2D" parent="."]
 scale = Vector2(0.999, 0.999)

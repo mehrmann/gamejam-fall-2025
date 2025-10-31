@@ -14,7 +14,8 @@ enum colors {
 	orange,
 	steel,
 	unbreakable,
-	unmoveable
+	unmoveable,
+	food
 }
 @export var color := colors.red
 
@@ -109,6 +110,7 @@ func get_neighbors_for(child: CollisionShape2D, occ: Dictionary) -> int:
 func randomize_color():
 	var max_colors = 2
 	var unbreakable = 0.05
+	var food = 0.01
 	if (global_position.y > 100 * 18):
 		max_colors = 6
 		unbreakable = 0.1
@@ -122,7 +124,9 @@ func randomize_color():
 		max_colors = 3
 		unbreakable = 0.3
 	var keys := colors.keys()
-	if randf() > unbreakable:
+	if randf() < food:
+		color = colors.food
+	elif randf() > unbreakable:
 		color = colors[keys[randi() % max_colors]]
 	else:
 		health = 8

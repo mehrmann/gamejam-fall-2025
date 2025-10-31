@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://c4775a5ltcdgv"]
+[gd_scene load_steps=7 format=3 uid="uid://c4775a5ltcdgv"]
 
 [ext_resource type="Script" uid="uid://7sp7pesel2ng" path="res://scenes/game.gd" id="1_lbhrr"]
 [ext_resource type="PackedScene" uid="uid://b8742761vane7" path="res://scenes/character.tscn" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://dul06hvqknufo" path="res://scenes/overlay.tscn" id="2_lnu2h"]
 [ext_resource type="PackedScene" uid="uid://c76kgq06r328i" path="res://scenes/game_area.tscn" id="3_lnu2h"]
+[ext_resource type="Texture2D" uid="uid://ca60qclpch1wk" path="res://assets/background.png" id="4_p57ef"]
 [ext_resource type="AudioStream" uid="uid://danf1r7ossy1" path="res://assets/music/arcade-beat-323176.mp3" id="5_iywne"]
 
 [node name="Game" type="Node2D"]
@@ -22,6 +23,16 @@ offset_right = 201.0
 offset_bottom = 268.0
 color = Color(0.039215688, 0.6901961, 1, 1)
 metadata/_edit_use_anchors_ = true
+
+[node name="TextureRect" type="TextureRect" parent="Character"]
+z_index = -10
+offset_left = -336.0
+offset_top = -197.0
+offset_right = 325.0
+offset_bottom = 440.0
+texture = ExtResource("4_p57ef")
+expand_mode = 2
+stretch_mode = 1
 
 [node name="Camera2D" type="Camera2D" parent="Character"]
 position = Vector2(-1, 8)

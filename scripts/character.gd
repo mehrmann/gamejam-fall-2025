@@ -10,6 +10,7 @@ const JUMP_VELOCITY = -180.0
 @onready var audio_player = $AudioStreamPlayer2D
 var break_block_sound = preload("res://assets/sounds/break_block.wav")
 var splat_sound = preload("res://assets/sounds/splat.wav")
+var food_sound = preload("res://assets/sounds/food.wav")
 
 var energy = 100
 signal energy_updated(energy)
@@ -18,6 +19,20 @@ signal maxDepth_updated(maxDepth)
 
 
 func _physics_process(delta:float) -> void:
+	energy -= delta
+	energy_updated.emit(energy)
+	
+	if energy < 25:
+		if !$alarm_player.playing:
+			$alarm_player.play()
+	else:
+		$alarm_player.playing = false
+	
+	if energy <= 0 and energy> -2:
+		print("you dead")
+		energy = -100
+		die()
+	
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
@@ -62,15 +77,24 @@ func _on_head_body_entered(body: Node2D) -> void:
 	if body is RigidBody2D:
 		var block = body as RigidBody2D
 		if block.linear_velocity.abs().y > 0:
-			audio_player.stream = splat_sound
-			audio_player.play()
-			$game_over_timer.start()
+			die()
 
+func die():
+	audio_player.stream = splat_sound
+	audio_player.play()
+	$game_over_timer.start()
 
 func break_block(body):
-	audio_player.stream = break_block_sound
-	audio_player.play()
-	body.queue_free()
+	if body.color == 8:
+		energy = min(energy+10, 100)
+		energy_updated.emit(energy)
+		audio_player.stream = food_sound
+		audio_player.play()
+		body.queue_free()
+	else:
+		audio_player.stream = break_block_sound
+		audio_player.play()
+		body.queue_free()
 
 
 func _on_game_over_timer_timeout() -> void:
